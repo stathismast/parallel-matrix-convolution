@@ -6,10 +6,10 @@
 
 //Applies a filter to every pixel except
 //those that are om the edges
-void applyFilter(char ** c){
+void applyFilter(unsigned char ** c){
 
     //Allocate space for a copy of the given 2d array
-    char** copy;
+    unsigned char** copy;
     copy = malloc(X*sizeof(char *));
     for(int i=0; i<X; i++){
         copy[i] = malloc(Y*sizeof(char));
@@ -25,15 +25,15 @@ void applyFilter(char ** c){
     //Apply filter
     for(int i=1; i<Y-1; i++){
         for(int j=1; j<X-1; j++){
-            c[j][i] = (unsigned char)copy[j-1][i-1]*((double)1/16)
-                    + (unsigned char)copy[j][i-1]*((double)2/16)
-                    + (unsigned char)copy[j+1][i-1]*((double)1/16)
-                    + (unsigned char)copy[j-1][i]*((double)2/16)
-                    + (unsigned char)copy[j][i]*((double)4/16)
-                    + (unsigned char)copy[j+1][i]*((double)2/16)
-                    + (unsigned char)copy[j-1][i+1]*((double)1/16)
-                    + (unsigned char)copy[j][i+1]*((double)2/16)
-                    + (unsigned char)copy[j+1][i+1]*((double)1/16);
+            c[j][i] = copy[j-1][i-1]*((double)1/16)
+                    + copy[j][i-1]*((double)2/16)
+                    + copy[j+1][i-1]*((double)1/16)
+                    + copy[j-1][i]*((double)2/16)
+                    + copy[j][i]*((double)4/16)
+                    + copy[j+1][i]*((double)2/16)
+                    + copy[j-1][i+1]*((double)1/16)
+                    + copy[j][i+1]*((double)2/16)
+                    + copy[j+1][i+1]*((double)1/16);
         }
     }
 
@@ -47,7 +47,7 @@ int main(void){
     FILE *file = fopen(fileName, "r");
 
     //Allocate enough space for every pixel
-    char ** c;
+    unsigned char ** c;
     c = malloc(X*sizeof(char *));
     for(int i=0; i<X; i++){
         c[i] = malloc(Y*sizeof(char));
