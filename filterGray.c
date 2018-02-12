@@ -6,14 +6,10 @@
 
 //Applies a filter to every pixel except
 //those that are om the edges
-void applyFilter(unsigned char ** c){
+void applyFilter(unsigned char c[X][Y]){
 
     //Allocate space for a copy of the given 2d array
-    unsigned char** copy;
-    copy = malloc(X*sizeof(char *));
-    for(int i=0; i<X; i++){
-        copy[i] = malloc(Y*sizeof(char));
-    }
+    unsigned char (*copy) [Y] = malloc( sizeof(char[X][Y]) );
 
     //Copy every pixel into the new 2D array
     for(int i=0; i<Y; i++){
@@ -47,11 +43,12 @@ int main(void){
     FILE *file = fopen(fileName, "r");
 
     //Allocate enough space for every pixel
-    unsigned char ** c;
-    c = malloc(X*sizeof(char *));
-    for(int i=0; i<X; i++){
-        c[i] = malloc(Y*sizeof(char));
-    }
+    unsigned char (*c) [Y] = malloc( sizeof(char[X][Y]) );
+    // unsigned char ** c;
+    // c = malloc(X*sizeof(char *));
+    // for(int i=0; i<X; i++){
+    //     c[i] = malloc(Y*sizeof(char));
+    // }
 
     //load every pixel into a 2D array
     for(int i=0; i<Y; i++){
