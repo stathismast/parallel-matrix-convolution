@@ -13,9 +13,14 @@ int main(int argc, char *argv[]) {
 	MPI_Request request;
 	MPI_Status status;
 
+	MPI_Datatype column;
 	MPI_Datatype row;
+
 	int topRow[8];
 	int bottomRow[8];
+
+	int leftCol[8];
+	int rightCol[8];
 
 	int leftUpCorn,rightUpCorn,rightDownCorn,leftDownCorn;
 
@@ -50,6 +55,8 @@ int main(int argc, char *argv[]) {
 	MPI_Type_contiguous(8,MPI_INT,&row);
 	MPI_Type_commit(&row);
 
+	MPI_Type_vector(8,1,8,MPI_INT,&column);
+	MPI_Type_commit(&column);
 
 	if (my_rank == 0) {
 		/* Fill in array */
@@ -94,11 +101,17 @@ int main(int argc, char *argv[]) {
 	/* Send and recieve rows,columns and corners */
 	if( my_rank == 0 ){
 
+		/* Send my rightCol to process 1 */
+		MPI_Send(&myArray[0][7],1,column,1,0,MPI_COMM_WORLD);
+
 		/* Send my bottomRow to process 2 */
 		MPI_Send(myArray[7],1,row,2,0,MPI_COMM_WORLD);
 
 		/* Send my rightDownCorn to process 3 */
 		MPI_Send(&myArray[7][7],1,MPI_INT,3,0,MPI_COMM_WORLD);
+
+		/* Recieve rightCol from process 1 */
+		MPI_Recv(&rightCol,8,MPI_INT,1,0,MPI_COMM_WORLD, &status);
 
 		/* Recieve bottomRow from process 2 */
 		MPI_Recv(bottomRow,1,row,2,0,MPI_COMM_WORLD, &status);
@@ -108,6 +121,12 @@ int main(int argc, char *argv[]) {
 
 	}
 	else if( my_rank == 1 ){
+
+		/* Recieve leftCol from process 0 */
+		MPI_Recv(&leftCol,8,MPI_INT,0,0,MPI_COMM_WORLD, &status);
+
+		/* Send my leftCol to process 0 */
+		MPI_Send(&myArray[0][0],1,column,0,0,MPI_COMM_WORLD);
 
 		/* Send my leftDownCorn to process 2 */
 		MPI_Send(&myArray[7][0],1,MPI_INT,2,0,MPI_COMM_WORLD);
@@ -136,6 +155,12 @@ int main(int argc, char *argv[]) {
 		/* Send my rightUpCorn to process 1 */
 		MPI_Send(&myArray[0][7],1,MPI_INT,1,0,MPI_COMM_WORLD);
 
+		/* Send my rightCol to process 3 */
+		MPI_Send(&myArray[0][7],1,column,3,0,MPI_COMM_WORLD);
+
+		/* Recieve rightCol from process 3 */
+		MPI_Recv(&rightCol,8,MPI_INT,3,0,MPI_COMM_WORLD, &status);
+
 	}
 	else if( my_rank == 3 ){
 
@@ -151,6 +176,12 @@ int main(int argc, char *argv[]) {
 		/* Send my topRow to process 1 */
 		MPI_Send(myArray[0],1,row,1,0,MPI_COMM_WORLD);
 
+		/* Recieve leftCol from process 2 */
+		MPI_Recv(&leftCol,8,MPI_INT,2,0,MPI_COMM_WORLD, &status);
+
+		/* Send my leftCol to process 2 */
+		MPI_Send(&myArray[0][0],1,column,2,0,MPI_COMM_WORLD);
+
 	}
 
 
@@ -162,6 +193,12 @@ int main(int argc, char *argv[]) {
 		printf("\tbottomRow from process 2:\n\t");
 		for( i=0; i<8; i++ ){
 		printf("%d ",bottomRow[i] );
+		}
+		printf("\n");
+
+		printf("\trightCol from process 1:\n");
+		for( i=0; i<8; i++ ){
+			printf("\t%d\n",rightCol[i] );
 		}
 		printf("\n");
 
@@ -182,6 +219,12 @@ int main(int argc, char *argv[]) {
 		}
 		printf("\n");
 
+		printf("\tleftCol from process 0:\n");
+		for( i=0; i<8; i++ ){
+			printf("\t%d\n",leftCol[i] );
+		}
+		printf("\n");
+
 		printf("\tleftDownCorn from process 2:\n");
 		printf("\t%d\n",leftDownCorn );
 		printf("\n" );
@@ -199,6 +242,12 @@ int main(int argc, char *argv[]) {
 		}
 		printf("\n");
 
+		printf("\trightCol from process 3:\n");
+		for( i=0; i<8; i++ ){
+			printf("\t%d\n",rightCol[i] );
+		}
+		printf("\n");
+
 		printf("\trightUpCorn from process 1:\n");
 		printf("\t%d\n",rightUpCorn );
 		printf("\n" );
@@ -213,6 +262,12 @@ int main(int argc, char *argv[]) {
 		printf("\ttopRow from process 1:\n\t");
 		for( i=0; i<8; i++ ){
 			printf("%d ",topRow[i] );
+		}
+		printf("\n");
+
+		printf("\tleftCol from process 2:\n");
+		for( i=0; i<8; i++ ){
+			printf("\t%d\n",leftCol[i] );
 		}
 		printf("\n");
 
