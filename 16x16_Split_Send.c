@@ -157,10 +157,10 @@ int main(int argc, char *argv[]) {
 		MPI_Send(&myArray[0][7],1,MPI_INT,1,0,MPI_COMM_WORLD);
 
 		/* Send my rightCol to process 3 */
-		MPI_Send(&myArray[0][7],1,column,3,0,MPI_COMM_WORLD);
+//		MPI_Send(&myArray[0][7],1,column,3,0,MPI_COMM_WORLD);
 
 		/* Recieve rightCol from process 3 */
-		MPI_Recv(&rightCol,1,column,3,0,MPI_COMM_WORLD, &status);
+//		MPI_Recv(&rightCol,1,column,3,0,MPI_COMM_WORLD, &status);
 
 	}
 	else if( my_rank == 3 ){
@@ -178,10 +178,10 @@ int main(int argc, char *argv[]) {
 		MPI_Send(myArray[0],1,row,1,0,MPI_COMM_WORLD);
 
 		/* Recieve leftCol from process 2 */
-		MPI_Recv(&leftCol,1,column,2,0,MPI_COMM_WORLD, &status);
+//		MPI_Recv(&leftCol,1,column,2,0,MPI_COMM_WORLD, &status);
 
 		/* Send my leftCol to process 2 */
-		MPI_Send(&myArray[0][7],1,column,2,0,MPI_COMM_WORLD);
+//		MPI_Send(&myArray[0][7],1,column,2,0,MPI_COMM_WORLD);
 
 	}
 
@@ -245,11 +245,11 @@ int main(int argc, char *argv[]) {
 		}
 		printf("\n");
 
-		printf("\trightCol from process 3:\n");
-		for( i=0; i<8; i++ ){
-			printf("\t%d\n",rightCol[i][0] );
-		}
-		printf("\n");
+//		printf("\trightCol from process 3:\n");
+//		for( i=0; i<8; i++ ){
+//			printf("\t%d\n",rightCol[i][0] );
+//		}
+//		printf("\n");
 
 		printf("\trightUpCorn from process 1:\n");
 		printf("\t%d\n",rightUpCorn );
@@ -268,11 +268,11 @@ int main(int argc, char *argv[]) {
 		}
 		printf("\n");
 
-		printf("\tleftCol from process 2:\n");
-		for( i=0; i<8; i++ ){
-			printf("\t%d\n",leftCol[i][0] );
-		}
-		printf("\n");
+//		printf("\tleftCol from process 2:\n");
+//		for( i=0; i<8; i++ ){
+//			printf("\t%d\n",leftCol[i][0] );
+//		}
+//		printf("\n");
 
 		printf("\tleftUpCorn from process 0:\n");
 		printf("\t%d\n",leftUpCorn );
