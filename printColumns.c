@@ -41,19 +41,19 @@ int main(int argc, char *argv[]) {
 			array2D[i][4] = i*10 + 5;
 		}
 
-		/* Send rows to other processes */
+		/* Send columns to other processes */
 		for( i=0; i<comm_sz; i++ ){
 			MPI_Isend(&array2D[0][i],1,column,i,0,MPI_COMM_WORLD,&request);
 		}
 		MPI_Recv(&myColumn,1,column,0,0,MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	}
 	else {
-		/* Recieve row */
+		/* Recieve column */
 		MPI_Recv(&myColumn,1,column,0,0,MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	}
 
 
-	/* Print row */
+	/* Print column */
 	printf("Column of process %d is :\n",my_rank );
 	for( i=0; i<5; i++ ){
 		printf("%d\n",myColumn[i][0] );
