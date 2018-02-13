@@ -220,7 +220,7 @@ int main(int argc, char *argv[]) {
 			printf("%d ",bottomRow[i] );
 		}
 		printf("\n");
-
+		
 		printf("\tleftCol from process 0:\n");
 		printf("pou einai %d %d %d %d %d %d %d %d\n",leftCol[0][0],leftCol[1][0],leftCol[2][0],leftCol[3][0],leftCol[4][0],leftCol[5][0],leftCol[6][0],leftCol[7][0] );
 		for( i=0; i<8; i++ ){

@@ -111,14 +111,16 @@ int main(int argc, char *argv[]) {
 		/* Send my rightDownCorn to process 3 */
 		MPI_Isend(&myArray[7][7],1,MPI_INT,3,0,MPI_COMM_WORLD,&request);
 
+		/* Recieve bottomRow from process 2 */
+		MPI_Recv(bottomRow,1,row,2,0,MPI_COMM_WORLD, &status);
+		
+		/* Recieve rightDownCorn from process 3 */
+		MPI_Recv(&rightDownCorn,1,MPI_INT,3,0,MPI_COMM_WORLD, &status);
+
 		/* Recieve rightCol from process 1 */
 		MPI_Recv(&rightCol,1,column,1,0,MPI_COMM_WORLD, &status);
 
-		/* Recieve bottomRow from process 2 */
-		MPI_Recv(bottomRow,1,row,2,0,MPI_COMM_WORLD, &status);
 
-		/* Recieve rightDownCorn from process 3 */
-		MPI_Recv(&rightDownCorn,1,MPI_INT,3,0,MPI_COMM_WORLD, &status);
 
 	}
 	else if( my_rank == 1 ){
@@ -132,6 +134,9 @@ int main(int argc, char *argv[]) {
 		/* Send my bottomRow to process 3 */
 		MPI_Isend(myArray[7],1,row,3,0,MPI_COMM_WORLD,&request);
 
+		/* Recieve bottomRow from process 3 */
+		MPI_Recv(bottomRow,1,row,3,0,MPI_COMM_WORLD, &status);
+
 		/* Recieve leftCol from process 0 */
 		MPI_Recv(&leftCol,1,column,0,0,MPI_COMM_WORLD, &status);
 		printf("pire thn column kai einai %d %d %d %d\n",leftCol[0][0],leftCol[1][0],leftCol[2][0],leftCol[3][0] );
@@ -139,8 +144,7 @@ int main(int argc, char *argv[]) {
 		/* Recieve leftDownCorn from process 2 */
 		MPI_Recv(&leftDownCorn,1,MPI_INT,2,0,MPI_COMM_WORLD, &status);
 
-		/* Recieve bottomRow from process 3 */
-		MPI_Recv(bottomRow,1,row,3,0,MPI_COMM_WORLD, &status);
+
 
 	}
 	else if( my_rank == 2 ){
