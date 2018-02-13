@@ -60,25 +60,25 @@ int main(int argc, char *argv[]) {
 
 	if (my_rank == 0) {
 		/* Fill in array */
-
+		int counter = 0;
 		for( i=0; i<16; i++ ){ /* comm_sz must be 4 */
 
-			array2D[i][0] = i*10 + 1;
-			array2D[i][1] = i*10 + 2;
-			array2D[i][2] = i*10 + 3;
-			array2D[i][3] = i*10 + 4;
-			array2D[i][4] = i*10 + 5;
-			array2D[i][5] = i*10 + 6;
-			array2D[i][6] = i*10 + 7;
-			array2D[i][7] = i*10 + 8;
-			array2D[i][8] = i*10 + 9;
-			array2D[i][9] = i*10 + 10;
-			array2D[i][10] = i*10 + 11;
-			array2D[i][11] = i*10 + 12;
-			array2D[i][12] = i*10 + 13;
-			array2D[i][13] = i*10 + 14;
-			array2D[i][14] = i*10 + 15;
-			array2D[i][15] = i*10 + 16;
+			array2D[i][0] = counter++;
+			array2D[i][1] = counter++;
+			array2D[i][2] = counter++;
+			array2D[i][3] = counter++;
+			array2D[i][4] = counter++;
+			array2D[i][5] = counter++;
+			array2D[i][6] = counter++;
+			array2D[i][7] = counter++;
+			array2D[i][8] = counter++;
+			array2D[i][9] = counter++;
+			array2D[i][10] = counter++;
+			array2D[i][11] = counter++;
+			array2D[i][12] = counter++;
+			array2D[i][13] = counter++;
+			array2D[i][14] = counter++;
+			array2D[i][15] = counter++;
 
 		}
 
