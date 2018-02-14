@@ -6,6 +6,7 @@
 #define NROWS 16
 #define NCOLS 24
 #define NPROC 4	/*comm_sz */
+#define S 2
 
 int main(int argc, char *argv[]) {
 	int comm_sz;               /* Number of processes    */
@@ -92,7 +93,7 @@ int main(int argc, char *argv[]) {
 	printf("\n\n");
 
 	/* Send and recieve rows,columns and corners */
-	if( my_rank == 0 ){
+	if( my_rank < S && my_rank%S == 0 ){ //top left corner
 
 		/* Send my rightCol to process 1 */
 		MPI_Isend(&myArray[0][(NCOLS/2)-1],1,column,1,0,MPI_COMM_WORLD,&request);
@@ -113,7 +114,7 @@ int main(int argc, char *argv[]) {
 		MPI_Recv(&rightDownCorn,1,MPI_INT,3,0,MPI_COMM_WORLD, &status);
 
 	}
-	else if( my_rank == 1 ){
+	else if( my_rank < S && my_rank%S == S-1 ){ //top right corner
 
 		/* Send my leftCol to process 0 */
 		MPI_Isend(&myArray[0][0],1,column,0,0,MPI_COMM_WORLD,&request);
@@ -134,7 +135,7 @@ int main(int argc, char *argv[]) {
 		MPI_Recv(bottomRow,1,row,3,0,MPI_COMM_WORLD, &status);
 
 	}
-	else if( my_rank == 2 ){
+	else if( my_rank >= NPROC-S && my_rank%S == 0 ){ //bottom left corner
 
 		/* Send my topRow to process 0 */
 		MPI_Isend(myArray[0],1,row,0,0,MPI_COMM_WORLD,&request);
@@ -155,7 +156,7 @@ int main(int argc, char *argv[]) {
 		MPI_Recv(rightCol,(NROWS/2),MPI_INT,3,0,MPI_COMM_WORLD, &status);
 
 	}
-	else if( my_rank == 3 ){
+	else if( my_rank >= NPROC-S && my_rank%S == S-1 ){
 
 		/* Send my leftUpCorn to process 0 */
 		MPI_Isend(&myArray[0][0],1,MPI_INT,0,0,MPI_COMM_WORLD,&request);
@@ -174,6 +175,21 @@ int main(int argc, char *argv[]) {
 
 		/* Recieve leftCol from process 2 */
 		MPI_Recv(leftCol,(NROWS/2),MPI_INT,2,0,MPI_COMM_WORLD, &status);
+
+	}
+	else if( my_rank < S ){ //top row
+
+	}
+	else if( my_rank >= NPROC - S ){ //bottom row
+
+	}
+	else if( my_rank%S == 0 ){ //leftmost column
+
+	}
+	else if( my_rank%S == S-1 ){ //rightmost column
+
+	}
+	else{ //everything in between
 
 	}
 
