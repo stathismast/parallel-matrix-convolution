@@ -2,11 +2,12 @@
 #include <mpi.h>     /* For MPI functions, etc */
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #define NROWS 16
 #define NCOLS 24
 #define NPROC 4	/*comm_sz */
-#define S 2
+//#define S 2
 
 int main(int argc, char *argv[]) {
 	int comm_sz;               /* Number of processes    */
@@ -55,7 +56,7 @@ int main(int argc, char *argv[]) {
 	/* Get my rank among all the processes */
 	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 
-	sqrt_comm_sz = S;
+	sqrt_comm_sz = sqrt(comm_sz);
 
 	topRow = malloc( (NCOLS/sqrt_comm_sz) * sizeof(int) );
 	bottomRow = malloc( (NCOLS/sqrt_comm_sz) * sizeof(int) );
