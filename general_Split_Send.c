@@ -21,23 +21,21 @@ int main(int argc, char *argv[]) {
 	MPI_Datatype column;
 	MPI_Datatype row;
 
-	int *topRow = malloc( (NCOLS/2) * sizeof(int) ); /* NCOLS / sqrt(comm_sz) */
-	int *bottomRow = malloc( (NCOLS/2) * sizeof(int) );
+	int sqrt_comm_sz;
 
-	int *leftCol = malloc( (NROWS/2) * sizeof(int) ); /* NROWS / sqrt(comm_sz) */
-	int *rightCol = malloc( (NROWS/2) * sizeof(int) );
+	int *topRow;
+	int *bottomRow;
+
+	int *leftCol;
+	int *rightCol;
 
 	int leftUpCorn,rightUpCorn,rightDownCorn,leftDownCorn;
 
-	int i,j;
-
-	int (*array2D) [NCOLS] = malloc( sizeof(int[NROWS][NCOLS]) ); /* original array */
-
-	int (*myArray) [NCOLS/2] = malloc( sizeof(int[NROWS/2][NCOLS/2]) ); /* local array of each process */
+	int i,j,k;
 
 	/* Arguments of create_subarray */
-	int sizes[2] = {NROWS,NCOLS}; /* size of original array */
-	int subsizes[2] = {NROWS/2,NCOLS/2}; /* size of subArrays */
+	int sizes[2]; /* size of original array */
+	int subsizes[2]; /* size of subArrays */
 	int starts[2] = {0,0}; /* first subArray starts from index [0][0] */
 
 	/* Arguments of Scatterv */
@@ -46,7 +44,7 @@ int main(int argc, char *argv[]) {
 		counts[i] = 1;
 	}
 
-	int displs[NPROC] = {0,1,(NROWS/2)*2,((NROWS/2)*2)+1}; /* The starting point of everyone's data in the global array, in block extents ( NCOLS/2 ints )  */
+	int *displs; /* The starting point of everyone's data in the global array, in block extents ( NCOLS/sqrt_comm_sz ints )  */
 
 	/* Start up MPI */
 	MPI_Init(&argc, &argv);
@@ -57,15 +55,41 @@ int main(int argc, char *argv[]) {
 	/* Get my rank among all the processes */
 	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 
+	sqrt_comm_sz = S;
+
+	topRow = malloc( (NCOLS/sqrt_comm_sz) * sizeof(int) );
+	bottomRow = malloc( (NCOLS/sqrt_comm_sz) * sizeof(int) );
+
+	leftCol = malloc( (NROWS/sqrt_comm_sz) * sizeof(int) );
+	rightCol = malloc( (NROWS/sqrt_comm_sz) * sizeof(int) );
+
+	int (*array2D) [NCOLS] = malloc( sizeof(int[NROWS][NCOLS]) ); /* original array */
+	int (*myArray) [NCOLS/sqrt_comm_sz] = malloc( sizeof(int[NROWS/sqrt_comm_sz][NCOLS/sqrt_comm_sz]) ); /* local array of each process */
+
+	/* Arguments of create_subarray */
+	sizes[0] = NROWS;
+	sizes[1] = NCOLS;
+	subsizes[0] = NROWS/sqrt_comm_sz;
+	subsizes[1] = NCOLS/sqrt_comm_sz;
+
+	displs = malloc( NPROC * sizeof(int) );
+	k=0;
+	for( i=0; i<sqrt_comm_sz; i++ ){
+		for( j=0; j<sqrt_comm_sz; j++ ){
+			displs[k] = i*NROWS+j;
+			k++;
+		}
+	}
+
 	/* Creating derived Datatype */
 	MPI_Type_create_subarray(2,sizes,subsizes,starts,MPI_ORDER_C,MPI_INT,&type);
-	MPI_Type_create_resized(type,0,(NCOLS/2)*sizeof(int),&resizedtype);
+	MPI_Type_create_resized(type,0,(NCOLS/sqrt_comm_sz)*sizeof(int),&resizedtype);
 	MPI_Type_commit(&resizedtype);
 
-	MPI_Type_contiguous(NCOLS/2,MPI_INT,&row);
+	MPI_Type_contiguous(NCOLS/sqrt_comm_sz,MPI_INT,&row);
 	MPI_Type_commit(&row);
 
-	MPI_Type_vector(NROWS/2,1,NCOLS/2,MPI_INT,&column);
+	MPI_Type_vector(NROWS/sqrt_comm_sz,1,NCOLS/sqrt_comm_sz,MPI_INT,&column);
 	MPI_Type_commit(&column);
 
 	if (my_rank == 0) {
@@ -79,13 +103,13 @@ int main(int argc, char *argv[]) {
 
 	MPI_Scatterv(array2D,counts,displs, /*process i gets counts[i] types(subArrays) from displs[i] */
 				 resizedtype,
-				 myArray,(NROWS/2)*(NCOLS/2),MPI_INT, /* I'm recieving (NROWS/2)*(NCOLS/2) MPI_INTs into myArray */
+				 myArray,(NROWS/sqrt_comm_sz)*(NCOLS/sqrt_comm_sz),MPI_INT, /* I'm recieving (NROWS/sqrt_comm_sz)*(NCOLS/sqrt_comm_sz) MPI_INTs into myArray */
 				 0,MPI_COMM_WORLD );
 
 	/* Print subArrays */
 	printf("SubArray of process %d is :\n",my_rank );
-	for( i=0; i<NROWS/2; i++ ){
-		for( j=0; j<NCOLS/2; j++ ){
+	for( i=0; i<NROWS/sqrt_comm_sz; i++ ){
+		for( j=0; j<NCOLS/sqrt_comm_sz; j++ ){
 			printf("%d ",myArray[i][j] );
 		}
 		printf("\n" );
@@ -93,19 +117,19 @@ int main(int argc, char *argv[]) {
 	printf("\n\n");
 
 	/* Send and recieve rows,columns and corners */
-	if( my_rank < S && my_rank%S == 0 ){ //top left corner
+	if( my_rank == 0 ){
 
 		/* Send my rightCol to process 1 */
-		MPI_Isend(&myArray[0][(NCOLS/2)-1],1,column,1,0,MPI_COMM_WORLD,&request);
+		MPI_Isend(&myArray[0][(NCOLS/sqrt_comm_sz)-1],1,column,1,0,MPI_COMM_WORLD,&request);
 
 		/* Send my bottomRow to process 2 */
-		MPI_Isend(myArray[(NROWS/2)-1],1,row,2,0,MPI_COMM_WORLD,&request);
+		MPI_Isend(myArray[(NROWS/sqrt_comm_sz)-1],1,row,2,0,MPI_COMM_WORLD,&request);
 
 		/* Send my rightDownCorn to process 3 */
-		MPI_Isend(&myArray[(NROWS/2)-1][(NCOLS/2)-1],1,MPI_INT,3,0,MPI_COMM_WORLD,&request);
+		MPI_Isend(&myArray[(NROWS/sqrt_comm_sz)-1][(NCOLS/sqrt_comm_sz)-1],1,MPI_INT,3,0,MPI_COMM_WORLD,&request);
 
 		/* Recieve rightCol from process 1 */
-		MPI_Recv(rightCol,(NROWS/2),MPI_INT,1,0,MPI_COMM_WORLD, &status);
+		MPI_Recv(rightCol,(NROWS/sqrt_comm_sz),MPI_INT,1,0,MPI_COMM_WORLD, &status);
 
 		/* Recieve bottomRow from process 2 */
 		MPI_Recv(bottomRow,1,row,2,0,MPI_COMM_WORLD, &status);
@@ -114,19 +138,19 @@ int main(int argc, char *argv[]) {
 		MPI_Recv(&rightDownCorn,1,MPI_INT,3,0,MPI_COMM_WORLD, &status);
 
 	}
-	else if( my_rank < S && my_rank%S == S-1 ){ //top right corner
+	else if( my_rank == 1 ){
 
 		/* Send my leftCol to process 0 */
 		MPI_Isend(&myArray[0][0],1,column,0,0,MPI_COMM_WORLD,&request);
 
 		/* Send my leftDownCorn to process 2 */
-		MPI_Isend(&myArray[(NROWS/2)-1][0],1,MPI_INT,2,0,MPI_COMM_WORLD,&request);
+		MPI_Isend(&myArray[(NROWS/sqrt_comm_sz)-1][0],1,MPI_INT,2,0,MPI_COMM_WORLD,&request);
 
 		/* Send my bottomRow to process 3 */
-		MPI_Isend(myArray[(NROWS/2)-1],1,row,3,0,MPI_COMM_WORLD,&request);
+		MPI_Isend(myArray[(NROWS/sqrt_comm_sz)-1],1,row,3,0,MPI_COMM_WORLD,&request);
 
 		/* Recieve leftCol from process 0 */
-		MPI_Recv(leftCol,(NROWS/2),MPI_INT,0,0,MPI_COMM_WORLD, &status);
+		MPI_Recv(leftCol,(NROWS/sqrt_comm_sz),MPI_INT,0,0,MPI_COMM_WORLD, &status);
 
 		/* Recieve leftDownCorn from process 2 */
 		MPI_Recv(&leftDownCorn,1,MPI_INT,2,0,MPI_COMM_WORLD, &status);
@@ -135,16 +159,16 @@ int main(int argc, char *argv[]) {
 		MPI_Recv(bottomRow,1,row,3,0,MPI_COMM_WORLD, &status);
 
 	}
-	else if( my_rank >= NPROC-S && my_rank%S == 0 ){ //bottom left corner
+	else if( my_rank == 2 ){
 
 		/* Send my topRow to process 0 */
 		MPI_Isend(myArray[0],1,row,0,0,MPI_COMM_WORLD,&request);
 
 		/* Send my rightUpCorn to process 1 */
-		MPI_Isend(&myArray[0][(NCOLS/2)-1],1,MPI_INT,1,0,MPI_COMM_WORLD,&request);
+		MPI_Isend(&myArray[0][(NCOLS/sqrt_comm_sz)-1],1,MPI_INT,1,0,MPI_COMM_WORLD,&request);
 
 		/* Send my rightCol to process 3 */
-		MPI_Isend(&myArray[0][(NCOLS/2)-1],1,column,3,0,MPI_COMM_WORLD,&request);
+		MPI_Isend(&myArray[0][(NCOLS/sqrt_comm_sz)-1],1,column,3,0,MPI_COMM_WORLD,&request);
 
 		/* Recieve topRow from process 0 */
 		MPI_Recv(topRow,1,row,0,0,MPI_COMM_WORLD, &status);
@@ -153,10 +177,10 @@ int main(int argc, char *argv[]) {
 		MPI_Recv(&rightUpCorn,1,MPI_INT,1,0,MPI_COMM_WORLD, &status);
 
 		/* Recieve rightCol from process 3 */
-		MPI_Recv(rightCol,(NROWS/2),MPI_INT,3,0,MPI_COMM_WORLD, &status);
+		MPI_Recv(rightCol,(NROWS/sqrt_comm_sz),MPI_INT,3,0,MPI_COMM_WORLD, &status);
 
 	}
-	else if( my_rank >= NPROC-S && my_rank%S == S-1 ){
+	else if( my_rank == 3 ){
 
 		/* Send my leftUpCorn to process 0 */
 		MPI_Isend(&myArray[0][0],1,MPI_INT,0,0,MPI_COMM_WORLD,&request);
@@ -174,22 +198,7 @@ int main(int argc, char *argv[]) {
 		MPI_Recv(topRow,1,row,1,0,MPI_COMM_WORLD, &status);
 
 		/* Recieve leftCol from process 2 */
-		MPI_Recv(leftCol,(NROWS/2),MPI_INT,2,0,MPI_COMM_WORLD, &status);
-
-	}
-	else if( my_rank < S ){ //top row
-
-	}
-	else if( my_rank >= NPROC - S ){ //bottom row
-
-	}
-	else if( my_rank%S == 0 ){ //leftmost column
-
-	}
-	else if( my_rank%S == S-1 ){ //rightmost column
-
-	}
-	else{ //everything in between
+		MPI_Recv(leftCol,(NROWS/sqrt_comm_sz),MPI_INT,2,0,MPI_COMM_WORLD, &status);
 
 	}
 
@@ -200,13 +209,13 @@ int main(int argc, char *argv[]) {
 		printf("Im process %d and I recieved:\n",my_rank );
 
 		printf("\tbottomRow from process 2:\n\t");
-		for( i=0; i<NCOLS/2; i++ ){
+		for( i=0; i<NCOLS/sqrt_comm_sz; i++ ){
 			printf("%d ",bottomRow[i] );
 		}
 		printf("\n");
 
 		printf("\trightCol from process 1:\n");
-		for( i=0; i<(NROWS/2); i++ ){
+		for( i=0; i<(NROWS/sqrt_comm_sz); i++ ){
 			printf("\t%d\n",rightCol[i] );
 		}
 		printf("\n");
@@ -223,13 +232,13 @@ int main(int argc, char *argv[]) {
 		printf("Im process %d and I recieved:\n",my_rank );
 
 		printf("\tbottomRow from process 3:\n\t");
-		for( i=0; i<NCOLS/2; i++ ){
+		for( i=0; i<NCOLS/sqrt_comm_sz; i++ ){
 			printf("%d ",bottomRow[i] );
 		}
 		printf("\n");
 
 		printf("\tleftCol from process 0:\n");
-		for( i=0; i<NROWS/2; i++ ){
+		for( i=0; i<NROWS/sqrt_comm_sz; i++ ){
 			printf("\t%d\n",leftCol[i] );
 		}
 		printf("\n");
@@ -246,13 +255,13 @@ int main(int argc, char *argv[]) {
 		printf("Im process %d and I recieved:\n",my_rank );
 
 		printf("\ttopRow from process 0:\n\t");
-		for( i=0; i<NCOLS/2; i++ ){
+		for( i=0; i<NCOLS/sqrt_comm_sz; i++ ){
 			printf("%d ",topRow[i] );
 		}
 		printf("\n");
 
 		printf("\trightCol from process 3:\n");
-		for( i=0; i<NROWS/2; i++ ){
+		for( i=0; i<NROWS/sqrt_comm_sz; i++ ){
 			printf("\t%d\n",rightCol[i] );
 		}
 		printf("\n");
@@ -269,13 +278,13 @@ int main(int argc, char *argv[]) {
 		printf("Im process %d and I recieved:\n",my_rank );
 
 		printf("\ttopRow from process 1:\n\t");
-		for( i=0; i<NCOLS/2; i++ ){
+		for( i=0; i<NCOLS/sqrt_comm_sz; i++ ){
 			printf("%d ",topRow[i] );
 		}
 		printf("\n");
 
 		printf("\tleftCol from process 2:\n");
-		for( i=0; i<NROWS/2; i++ ){
+		for( i=0; i<NROWS/sqrt_comm_sz; i++ ){
 			printf("\t%d\n",leftCol[i] );
 		}
 		printf("\n");
