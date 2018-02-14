@@ -7,7 +7,17 @@
 #define NROWS 16
 #define NCOLS 24
 #define NPROC 4	/*comm_sz */
-//#define S 2
+
+int ** get2DArray(int rows, int cols){
+    int * space = malloc(rows * cols * sizeof(int));
+    int ** array = malloc(rows * sizeof(int*));
+
+    for(int i=0; i<rows; i++){
+        array[i] = space+i*cols;
+    }
+
+    return array;
+}
 
 int main(int argc, char *argv[]) {
 	int comm_sz;               /* Number of processes    */
@@ -23,6 +33,9 @@ int main(int argc, char *argv[]) {
 	MPI_Datatype row;
 
 	int sqrt_comm_sz;
+
+	int **array2D; /* original array */
+	int **myArray; /* local array of each process */
 
 	int *topRow;
 	int *bottomRow;
@@ -64,8 +77,9 @@ int main(int argc, char *argv[]) {
 	leftCol = malloc( (NROWS/sqrt_comm_sz) * sizeof(int) );
 	rightCol = malloc( (NROWS/sqrt_comm_sz) * sizeof(int) );
 
-	int (*array2D) [NCOLS] = malloc( sizeof(int[NROWS][NCOLS]) ); /* original array */
-	int (*myArray) [NCOLS/sqrt_comm_sz] = malloc( sizeof(int[NROWS/sqrt_comm_sz][NCOLS/sqrt_comm_sz]) ); /* local array of each process */
+	array2D = get2DArray(NROWS,NCOLS);
+
+	myArray = get2DArray(NROWS/sqrt_comm_sz,NCOLS/sqrt_comm_sz);
 
 	/* Arguments of create_subarray */
 	sizes[0] = NROWS;
@@ -102,9 +116,9 @@ int main(int argc, char *argv[]) {
 		}
 	}
 
-	MPI_Scatterv(array2D,counts,displs, /*process i gets counts[i] types(subArrays) from displs[i] */
+	MPI_Scatterv(*array2D,counts,displs, /*process i gets counts[i] types(subArrays) from displs[i] */
 				 resizedtype,
-				 myArray,(NROWS/sqrt_comm_sz)*(NCOLS/sqrt_comm_sz),MPI_INT, /* I'm recieving (NROWS/sqrt_comm_sz)*(NCOLS/sqrt_comm_sz) MPI_INTs into myArray */
+				 *myArray,(NROWS/sqrt_comm_sz)*(NCOLS/sqrt_comm_sz),MPI_INT, /* I'm recieving (NROWS/sqrt_comm_sz)*(NCOLS/sqrt_comm_sz) MPI_INTs into myArray */
 				 0,MPI_COMM_WORLD );
 
 	/* Print subArrays */
