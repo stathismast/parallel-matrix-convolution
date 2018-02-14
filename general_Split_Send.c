@@ -6,7 +6,6 @@
 
 #define NROWS 16
 #define NCOLS 24
-#define NPROC 4	/*comm_sz */
 
 int ** get2DArray(int rows, int cols){
     int * space = malloc(rows * cols * sizeof(int));
@@ -53,10 +52,7 @@ int main(int argc, char *argv[]) {
 	int starts[2] = {0,0}; /* first subArray starts from index [0][0] */
 
 	/* Arguments of Scatterv */
-	int *counts = malloc( NPROC * sizeof(int) ); /* How many pieces of data everyone has in units of block */
-	for ( i=0; i<NPROC; i++ ){
-		counts[i] = 1;
-	}
+	int *counts; /* How many pieces of data everyone has in units of block */
 
 	int *displs; /* The starting point of everyone's data in the global array, in block extents ( NCOLS/sqrt_comm_sz ints )  */
 
@@ -87,7 +83,12 @@ int main(int argc, char *argv[]) {
 	subsizes[0] = NROWS/sqrt_comm_sz;
 	subsizes[1] = NCOLS/sqrt_comm_sz;
 
-	displs = malloc( NPROC * sizeof(int) );
+	counts = malloc( comm_sz * sizeof(int) ); /* How many pieces of data everyone has in units of block */
+	for ( i=0; i<comm_sz; i++ ){
+		counts[i] = 1;
+	}
+
+	displs = malloc( comm_sz * sizeof(int) );
 	k=0;
 	for( i=0; i<sqrt_comm_sz; i++ ){
 		for( j=0; j<sqrt_comm_sz; j++ ){
