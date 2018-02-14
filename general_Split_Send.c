@@ -132,7 +132,7 @@ int main(int argc, char *argv[]) {
 	printf("\n\n");
 
 	/* Send and recieve rows,columns and corners */
-	if( my_rank == 0 ){
+	if( my_rank < sqrt_comm_sz && my_rank%sqrt_comm_sz == 0 ){ //top left corner
 
 		/* Send my rightCol to process 1 */
 		MPI_Isend(&myArray[0][(NCOLS/sqrt_comm_sz)-1],1,column,1,0,MPI_COMM_WORLD,&request);
@@ -153,7 +153,7 @@ int main(int argc, char *argv[]) {
 		MPI_Recv(&rightDownCorn,1,MPI_INT,3,0,MPI_COMM_WORLD, &status);
 
 	}
-	else if( my_rank == 1 ){
+	else if( my_rank < sqrt_comm_sz && my_rank%sqrt_comm_sz == sqrt_comm_sz-1 ){ //top right corner
 
 		/* Send my leftCol to process 0 */
 		MPI_Isend(&myArray[0][0],1,column,0,0,MPI_COMM_WORLD,&request);
@@ -174,7 +174,7 @@ int main(int argc, char *argv[]) {
 		MPI_Recv(bottomRow,1,row,3,0,MPI_COMM_WORLD, &status);
 
 	}
-	else if( my_rank == 2 ){
+	else if( my_rank >= comm_sz-sqrt_comm_sz && my_rank%sqrt_comm_sz == 0 ){ //bottom left corner
 
 		/* Send my topRow to process 0 */
 		MPI_Isend(myArray[0],1,row,0,0,MPI_COMM_WORLD,&request);
@@ -195,7 +195,7 @@ int main(int argc, char *argv[]) {
 		MPI_Recv(rightCol,(NROWS/sqrt_comm_sz),MPI_INT,3,0,MPI_COMM_WORLD, &status);
 
 	}
-	else if( my_rank == 3 ){
+	else if( my_rank >= comm_sz-sqrt_comm_sz && my_rank%sqrt_comm_sz == sqrt_comm_sz-1 ){
 
 		/* Send my leftUpCorn to process 0 */
 		MPI_Isend(&myArray[0][0],1,MPI_INT,0,0,MPI_COMM_WORLD,&request);
@@ -216,6 +216,22 @@ int main(int argc, char *argv[]) {
 		MPI_Recv(leftCol,(NROWS/sqrt_comm_sz),MPI_INT,2,0,MPI_COMM_WORLD, &status);
 
 	}
+	else if( my_rank < sqrt_comm_sz ){ //top row
+
+	}
+	else if( my_rank >= comm_sz - sqrt_comm_sz ){ //bottom row
+
+	}
+	else if( my_rank%sqrt_comm_sz == 0 ){ //leftmost column
+
+	}
+	else if( my_rank%sqrt_comm_sz == sqrt_comm_sz-1 ){ //rightmost column
+
+	}
+	else{ //everything in between
+
+	}
+
 
 
 	/* Print recieved rows,columns and corners */
