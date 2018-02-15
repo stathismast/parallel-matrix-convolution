@@ -162,6 +162,13 @@ int main(int argc, char *argv[]) {
 		/* Recieve rightDownCorn from my rightdown process */
 		MPI_Recv(&rightDownCorn,1,MPI_INT,my_rank+sqrt_comm_sz+1,0,MPI_COMM_WORLD, &status);
 
+		/* What i didn't recieve */
+		topRow = NULL ;
+		leftCol = NULL ;
+		leftUpCorn = -1;
+		rightUpCorn = -1;
+		leftDownCorn = -1;
+
 	}
 	else if( my_rank < sqrt_comm_sz && my_rank%sqrt_comm_sz == sqrt_comm_sz-1 ){ //top right corner
 
@@ -182,6 +189,13 @@ int main(int argc, char *argv[]) {
 
 		/* Recieve bottomRow from my bottom process */
 		MPI_Recv(bottomRow,1,row,my_rank+sqrt_comm_sz,0,MPI_COMM_WORLD, &status);
+
+		/* What i didn't recieve */
+		topRow = NULL ;
+		rightCol = NULL ;
+		leftUpCorn = -1;
+		rightUpCorn = -1;
+		rightDownCorn = -1;
 
 	}
 	else if( my_rank >= comm_sz-sqrt_comm_sz && my_rank%sqrt_comm_sz == 0 ){ //bottom left corner
@@ -204,6 +218,13 @@ int main(int argc, char *argv[]) {
 		/* Recieve rightCol from my right process */
 		MPI_Recv(rightCol,(NROWS/sqrt_comm_sz),MPI_INT,my_rank+1,0,MPI_COMM_WORLD, &status);
 
+		/* What i didn't recieve */
+		bottomRow = NULL ;
+		leftCol = NULL ;
+		leftUpCorn = -1;
+		rightDownCorn = -1;
+		leftDownCorn = -1;
+
 	}
 	else if( my_rank >= comm_sz-sqrt_comm_sz && my_rank%sqrt_comm_sz == sqrt_comm_sz-1 ){ //bottom right corner
 
@@ -225,117 +246,275 @@ int main(int argc, char *argv[]) {
 		/* Recieve leftCol from my left process */
 		MPI_Recv(leftCol,(NROWS/sqrt_comm_sz),MPI_INT,my_rank-1,0,MPI_COMM_WORLD, &status);
 
+		/* What i didn't recieve */
+		bottomRow = NULL ;
+		rightCol = NULL ;
+		rightUpCorn = -1;
+		rightDownCorn = -1;
+		leftDownCorn = -1;
+
 	}
 	else if( my_rank < sqrt_comm_sz ){ //top row
+
+		/* Send my rightCol to my right process */
+		MPI_Isend(&myArray[0][(NCOLS/sqrt_comm_sz)-1],1,column,my_rank+1,0,MPI_COMM_WORLD,&request);
+
+		/* Send my bottomRow to my bottom process */
+		MPI_Isend(myArray[(NROWS/sqrt_comm_sz)-1],1,row,my_rank+sqrt_comm_sz,0,MPI_COMM_WORLD,&request);
+
+		/* Send my rightDownCorn to my rightdown process */
+		MPI_Isend(&myArray[(NROWS/sqrt_comm_sz)-1][(NCOLS/sqrt_comm_sz)-1],1,MPI_INT,my_rank+sqrt_comm_sz+1,0,MPI_COMM_WORLD,&request);
+
+		/* Send my leftCol to my left process */
+		MPI_Isend(&myArray[0][0],1,column,my_rank-1,0,MPI_COMM_WORLD,&request);
+
+		/* Send my leftDownCorn to my leftdown process */
+		MPI_Isend(&myArray[(NROWS/sqrt_comm_sz)-1][0],1,MPI_INT,my_rank+sqrt_comm_sz-1,0,MPI_COMM_WORLD,&request);
+
+		/* Recieve rightCol from my right process */
+		MPI_Recv(rightCol,(NROWS/sqrt_comm_sz),MPI_INT,my_rank+1,0,MPI_COMM_WORLD, &status);
+
+		/* Recieve bottomRow from my bottom process */
+		MPI_Recv(bottomRow,1,row,my_rank+sqrt_comm_sz,0,MPI_COMM_WORLD, &status);
+
+		/* Recieve rightDownCorn from my rightdown process */
+		MPI_Recv(&rightDownCorn,1,MPI_INT,my_rank+sqrt_comm_sz+1,0,MPI_COMM_WORLD, &status);
+
+		/* Recieve leftCol from my left process */
+		MPI_Recv(leftCol,(NROWS/sqrt_comm_sz),MPI_INT,my_rank-1,0,MPI_COMM_WORLD, &status);
+
+		/* Recieve leftDownCorn from my leftdown process */
+		MPI_Recv(&leftDownCorn,1,MPI_INT,my_rank+sqrt_comm_sz-1,0,MPI_COMM_WORLD, &status);
+
+		/* What i didn't recieve */
+		topRow = NULL ;
+		leftUpCorn = -1;
+		rightUpCorn = -1;
 
 	}
 	else if( my_rank >= comm_sz - sqrt_comm_sz ){ //bottom row
 
+		/* Send my topRow to my top process */
+		MPI_Isend(myArray[0],1,row,my_rank-sqrt_comm_sz,0,MPI_COMM_WORLD,&request);
+
+		/* Send my rightUpCorn to my rightup process */
+		MPI_Isend(&myArray[0][(NCOLS/sqrt_comm_sz)-1],1,MPI_INT,my_rank-sqrt_comm_sz+1,0,MPI_COMM_WORLD,&request);
+
+		/* Send my rightCol to my right process */
+		MPI_Isend(&myArray[0][(NCOLS/sqrt_comm_sz)-1],1,column,my_rank+1,0,MPI_COMM_WORLD,&request);
+
+		/* Send my leftUpCorn to my leftup process */
+		MPI_Isend(&myArray[0][0],1,MPI_INT,my_rank-sqrt_comm_sz-1,0,MPI_COMM_WORLD,&request);
+
+		/* Send my leftCol to my left process */
+		MPI_Isend(&myArray[0][0],1,column,my_rank-1,0,MPI_COMM_WORLD,&request);
+
+		/* Recieve topRow from my top process */
+		MPI_Recv(topRow,1,row,my_rank-sqrt_comm_sz,0,MPI_COMM_WORLD, &status);
+
+		/* Recieve rightUpCorn from my rightup rocess */
+		MPI_Recv(&rightUpCorn,1,MPI_INT,my_rank-sqrt_comm_sz+1,0,MPI_COMM_WORLD, &status);
+
+		/* Recieve rightCol from my right process */
+		MPI_Recv(rightCol,(NROWS/sqrt_comm_sz),MPI_INT,my_rank+1,0,MPI_COMM_WORLD, &status);
+
+		/* Recieve leftUpCorn from my left process */
+		MPI_Recv(&leftUpCorn,1,MPI_INT,my_rank-sqrt_comm_sz-1,0,MPI_COMM_WORLD, &status);
+
+		/* Recieve leftCol from my left process */
+		MPI_Recv(leftCol,(NROWS/sqrt_comm_sz),MPI_INT,my_rank-1,0,MPI_COMM_WORLD, &status);
+
+		/* What i didn't recieve */
+		bottomRow = NULL ;
+		rightDownCorn = -1;
+		leftDownCorn = -1;
+
 	}
 	else if( my_rank%sqrt_comm_sz == 0 ){ //leftmost column
+
+		/* Send my topRow to my top process */
+		MPI_Isend(myArray[0],1,row,my_rank-sqrt_comm_sz,0,MPI_COMM_WORLD,&request);
+
+		/* Send my rightUpCorn to my rightup process */
+		MPI_Isend(&myArray[0][(NCOLS/sqrt_comm_sz)-1],1,MPI_INT,my_rank-sqrt_comm_sz+1,0,MPI_COMM_WORLD,&request);
+
+		/* Send my rightCol to my right process */
+		MPI_Isend(&myArray[0][(NCOLS/sqrt_comm_sz)-1],1,column,my_rank+1,0,MPI_COMM_WORLD,&request);
+
+		/* Send my bottomRow to my bottom process */
+		MPI_Isend(myArray[(NROWS/sqrt_comm_sz)-1],1,row,my_rank+sqrt_comm_sz,0,MPI_COMM_WORLD,&request);
+
+		/* Send my rightDownCorn to my rightdown process */
+		MPI_Isend(&myArray[(NROWS/sqrt_comm_sz)-1][(NCOLS/sqrt_comm_sz)-1],1,MPI_INT,my_rank+sqrt_comm_sz+1,0,MPI_COMM_WORLD,&request);
+
+		/* Recieve topRow from my top process */
+		MPI_Recv(topRow,1,row,my_rank-sqrt_comm_sz,0,MPI_COMM_WORLD, &status);
+
+		/* Recieve rightUpCorn from my rightup rocess */
+		MPI_Recv(&rightUpCorn,1,MPI_INT,my_rank-sqrt_comm_sz+1,0,MPI_COMM_WORLD, &status);
+
+		/* Recieve rightCol from my right process */
+		MPI_Recv(rightCol,(NROWS/sqrt_comm_sz),MPI_INT,my_rank+1,0,MPI_COMM_WORLD, &status);
+
+		/* Recieve bottomRow from my bottom process */
+		MPI_Recv(bottomRow,1,row,my_rank+sqrt_comm_sz,0,MPI_COMM_WORLD, &status);
+
+		/* Recieve rightDownCorn from my rightdown process */
+		MPI_Recv(&rightDownCorn,1,MPI_INT,my_rank+sqrt_comm_sz+1,0,MPI_COMM_WORLD, &status);
+
+		/* What i didn't recieve */
+		leftCol = NULL ;
+		leftUpCorn = -1;
+		leftDownCorn = -1;
 
 	}
 	else if( my_rank%sqrt_comm_sz == sqrt_comm_sz-1 ){ //rightmost column
 
+		/* Send my topRow to my top process */
+		MPI_Isend(myArray[0],1,row,my_rank-sqrt_comm_sz,0,MPI_COMM_WORLD,&request);
+
+		/* Send my leftUpCorn to my leftup process */
+		MPI_Isend(&myArray[0][0],1,MPI_INT,my_rank-sqrt_comm_sz-1,0,MPI_COMM_WORLD,&request);
+
+		/* Send my leftCol to my left process */
+		MPI_Isend(&myArray[0][0],1,column,my_rank-1,0,MPI_COMM_WORLD,&request);
+
+		/* Send my bottomRow to my bottom process */
+		MPI_Isend(myArray[(NROWS/sqrt_comm_sz)-1],1,row,my_rank+sqrt_comm_sz,0,MPI_COMM_WORLD,&request);
+
+		/* Send my leftDownCorn to my leftdown process */
+		MPI_Isend(&myArray[(NROWS/sqrt_comm_sz)-1][0],1,MPI_INT,my_rank+sqrt_comm_sz-1,0,MPI_COMM_WORLD,&request);
+
+		/* Recieve topRow from my top process */
+		MPI_Recv(topRow,1,row,my_rank-sqrt_comm_sz,0,MPI_COMM_WORLD, &status);
+
+		/* Recieve leftUpCorn from my left process */
+		MPI_Recv(&leftUpCorn,1,MPI_INT,my_rank-sqrt_comm_sz-1,0,MPI_COMM_WORLD, &status);
+
+		/* Recieve leftCol from my left process */
+		MPI_Recv(leftCol,(NROWS/sqrt_comm_sz),MPI_INT,my_rank-1,0,MPI_COMM_WORLD, &status);
+
+		/* Recieve bottomRow from my bottom process */
+		MPI_Recv(bottomRow,1,row,my_rank+sqrt_comm_sz,0,MPI_COMM_WORLD, &status);
+
+		/* Recieve leftDownCorn from my leftdown process */
+		MPI_Recv(&leftDownCorn,1,MPI_INT,my_rank+sqrt_comm_sz-1,0,MPI_COMM_WORLD, &status);
+
+		/* What i didn't recieve */
+		rightCol = NULL ;
+		rightUpCorn = -1;
+		rightDownCorn = -1;
+
 	}
 	else{ //everything in between
 
+		/* Send my topRow to my top process */
+		MPI_Isend(myArray[0],1,row,my_rank-sqrt_comm_sz,0,MPI_COMM_WORLD,&request);
+
+		/* Send my leftUpCorn to my leftup process */
+		MPI_Isend(&myArray[0][0],1,MPI_INT,my_rank-sqrt_comm_sz-1,0,MPI_COMM_WORLD,&request);
+
+		/* Send my leftCol to my left process */
+		MPI_Isend(&myArray[0][0],1,column,my_rank-1,0,MPI_COMM_WORLD,&request);
+
+		/* Send my bottomRow to my bottom process */
+		MPI_Isend(myArray[(NROWS/sqrt_comm_sz)-1],1,row,my_rank+sqrt_comm_sz,0,MPI_COMM_WORLD,&request);
+
+		/* Send my leftDownCorn to my leftdown process */
+		MPI_Isend(&myArray[(NROWS/sqrt_comm_sz)-1][0],1,MPI_INT,my_rank+sqrt_comm_sz-1,0,MPI_COMM_WORLD,&request);
+
+		/* Send my rightUpCorn to my rightup process */
+		MPI_Isend(&myArray[0][(NCOLS/sqrt_comm_sz)-1],1,MPI_INT,my_rank-sqrt_comm_sz+1,0,MPI_COMM_WORLD,&request);
+
+		/* Send my rightCol to my right process */
+		MPI_Isend(&myArray[0][(NCOLS/sqrt_comm_sz)-1],1,column,my_rank+1,0,MPI_COMM_WORLD,&request);
+
+		/* Send my rightDownCorn to my rightdown process */
+		MPI_Isend(&myArray[(NROWS/sqrt_comm_sz)-1][(NCOLS/sqrt_comm_sz)-1],1,MPI_INT,my_rank+sqrt_comm_sz+1,0,MPI_COMM_WORLD,&request);
+
+		/* Recieve topRow from my top process */
+		MPI_Recv(topRow,1,row,my_rank-sqrt_comm_sz,0,MPI_COMM_WORLD, &status);
+
+		/* Recieve leftUpCorn from my left process */
+		MPI_Recv(&leftUpCorn,1,MPI_INT,my_rank-sqrt_comm_sz-1,0,MPI_COMM_WORLD, &status);
+
+		/* Recieve leftCol from my left process */
+		MPI_Recv(leftCol,(NROWS/sqrt_comm_sz),MPI_INT,my_rank-1,0,MPI_COMM_WORLD, &status);
+
+		/* Recieve bottomRow from my bottom process */
+		MPI_Recv(bottomRow,1,row,my_rank+sqrt_comm_sz,0,MPI_COMM_WORLD, &status);
+
+		/* Recieve leftDownCorn from my leftdown process */
+		MPI_Recv(&leftDownCorn,1,MPI_INT,my_rank+sqrt_comm_sz-1,0,MPI_COMM_WORLD, &status);
+
+		/* Recieve rightUpCorn from my rightup rocess */
+		MPI_Recv(&rightUpCorn,1,MPI_INT,my_rank-sqrt_comm_sz+1,0,MPI_COMM_WORLD, &status);
+
+		/* Recieve rightCol from my right process */
+		MPI_Recv(rightCol,(NROWS/sqrt_comm_sz),MPI_INT,my_rank+1,0,MPI_COMM_WORLD, &status);
+
+		/* Recieve rightDownCorn from my rightdown process */
+		MPI_Recv(&rightDownCorn,1,MPI_INT,my_rank+sqrt_comm_sz+1,0,MPI_COMM_WORLD, &status);
+
 	}
 
-
-
 	/* Print recieved rows,columns and corners */
-	if( my_rank == 0 ){
+	printf("Im process %d and I recieved:\n",my_rank );
 
-		printf("Im process %d and I recieved:\n",my_rank );
+	if( topRow != NULL ){
+		printf("\ttopRow:\n\t");
+		for( i=0; i<NCOLS/sqrt_comm_sz; i++ ){
+			printf("%d ",topRow[i] );
+		}
+		printf("\n");
+	}
 
-		printf("\tbottomRow from process 2:\n\t");
+	if( bottomRow != NULL ){
+		printf("\tbottomRow:\n\t");
 		for( i=0; i<NCOLS/sqrt_comm_sz; i++ ){
 			printf("%d ",bottomRow[i] );
 		}
 		printf("\n");
+	}
 
-		printf("\trightCol from process 1:\n");
+	if( leftCol != NULL ){
+		printf("\tleftCol:\n");
+		for( i=0; i<NROWS/sqrt_comm_sz; i++ ){
+			printf("\t%d\n",leftCol[i] );
+		}
+		printf("\n");
+	}
+
+	if( rightCol != NULL ){
+		printf("\trightCol:\n");
 		for( i=0; i<(NROWS/sqrt_comm_sz); i++ ){
 			printf("\t%d\n",rightCol[i] );
 		}
 		printf("\n");
-
-		printf("\trightDownCorn from process 3:\n");
-		printf("\t%d\n",rightDownCorn );
-		printf("\n" );
-
-		printf("\n");
-
 	}
-	else if( my_rank == 1 ){
 
-		printf("Im process %d and I recieved:\n",my_rank );
-
-		printf("\tbottomRow from process 3:\n\t");
-		for( i=0; i<NCOLS/sqrt_comm_sz; i++ ){
-			printf("%d ",bottomRow[i] );
-		}
-		printf("\n");
-
-		printf("\tleftCol from process 0:\n");
-		for( i=0; i<NROWS/sqrt_comm_sz; i++ ){
-			printf("\t%d\n",leftCol[i] );
-		}
-		printf("\n");
-
-		printf("\tleftDownCorn from process 2:\n");
-		printf("\t%d\n",leftDownCorn );
-		printf("\n" );
-
-		printf("\n");
-
-	}
-	else if( my_rank == 2 ){
-
-		printf("Im process %d and I recieved:\n",my_rank );
-
-		printf("\ttopRow from process 0:\n\t");
-		for( i=0; i<NCOLS/sqrt_comm_sz; i++ ){
-			printf("%d ",topRow[i] );
-		}
-		printf("\n");
-
-		printf("\trightCol from process 3:\n");
-		for( i=0; i<NROWS/sqrt_comm_sz; i++ ){
-			printf("\t%d\n",rightCol[i] );
-		}
-		printf("\n");
-
-		printf("\trightUpCorn from process 1:\n");
-		printf("\t%d\n",rightUpCorn );
-		printf("\n" );
-
-		printf("\n");
-
-	}
-	else if( my_rank == 3 ){
-
-		printf("Im process %d and I recieved:\n",my_rank );
-
-		printf("\ttopRow from process 1:\n\t");
-		for( i=0; i<NCOLS/sqrt_comm_sz; i++ ){
-			printf("%d ",topRow[i] );
-		}
-		printf("\n");
-
-		printf("\tleftCol from process 2:\n");
-		for( i=0; i<NROWS/sqrt_comm_sz; i++ ){
-			printf("\t%d\n",leftCol[i] );
-		}
-		printf("\n");
-
-		printf("\tleftUpCorn from process 0:\n");
+	if( leftUpCorn != -1 ){
+		printf("\tleftUpCorn:\n");
 		printf("\t%d\n",leftUpCorn );
 		printf("\n" );
+	}
 
-		printf("\n");
+	if( rightUpCorn != -1 ){
+		printf("\trightUpCorn :\n");
+		printf("\t%d\n",rightUpCorn );
+		printf("\n" );
+	}
 
+	if( leftDownCorn != -1 ){
+		printf("\tleftDownCorn:\n");
+		printf("\t%d\n",leftDownCorn );
+		printf("\n" );
+	}
+
+	if( rightDownCorn != -1 ){
+		printf("\trightDownCorn:\n");
+		printf("\t%d\n",rightDownCorn );
+		printf("\n" );
 	}
 
 	/* Shut down MPI */
