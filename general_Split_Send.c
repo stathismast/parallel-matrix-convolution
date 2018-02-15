@@ -43,6 +43,8 @@ int main(int argc, char *argv[]) {
 	int sqrt_comm_sz;
 
 	int **array2D; /* original array */
+	int **final2D;
+
 	int **myArray; /* local array of each process */
 
 	int *topRow;
@@ -83,6 +85,7 @@ int main(int argc, char *argv[]) {
 	rightCol = malloc( (NROWS/sqrt_comm_sz) * sizeof(int) );
 
 	array2D = get2DArray(NROWS,NCOLS);
+	final2D = get2DArray(NROWS,NCOLS);
 
 	myArray = get2DArray(NROWS/sqrt_comm_sz,NCOLS/sqrt_comm_sz);
 
@@ -135,6 +138,7 @@ int main(int argc, char *argv[]) {
 	printf("SubArray of process %d is :\n",my_rank );
 	for( i=0; i<NROWS/sqrt_comm_sz; i++ ){
 		for( j=0; j<NCOLS/sqrt_comm_sz; j++ ){
+			myArray[i][j] = my_rank;
 			printf("%d ",myArray[i][j] );
 		}
 		printf("\n" );
@@ -516,6 +520,20 @@ int main(int argc, char *argv[]) {
 		printf("\t%d\n",rightDownCorn );
 		printf("\n" );
 	}
+
+	MPI_Gatherv(*myArray,(NROWS/sqrt_comm_sz)*(NCOLS/sqrt_comm_sz),MPI_INT,*final2D,counts,displs,resizedtype,0,MPI_COMM_WORLD );
+
+	if( my_rank == 0 ){
+		printf("final2D is :\n");
+		for( i=0; i<NROWS; i++ ){
+			for( j=0; j<NCOLS; j++ ){
+				printf("%d ",final2D[i][j] );
+			}
+			printf("\n" );
+		}
+		printf("\n\n");
+	}
+
 
 	/* Shut down MPI */
 	MPI_Finalize();
