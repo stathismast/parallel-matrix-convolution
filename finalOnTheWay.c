@@ -18,42 +18,42 @@
 
 
 unsigned char ** get2DArray(int rows, int cols){
-    unsigned char * space = malloc(rows * cols * sizeof(unsigned char));
-    unsigned char ** array = malloc(rows * sizeof(unsigned char*));
+	unsigned char * space = malloc(rows * cols * sizeof(unsigned char));
+	unsigned char ** array = malloc(rows * sizeof(unsigned char*));
 
-    for(int i=0; i<rows; i++){
-        array[i] = space+i*cols;
-    }
+	for(int i=0; i<rows; i++){
+		array[i] = space+i*cols;
+	}
 
-    return array;
+	return array;
 }
 
 //Applies a filter to every pixel except
 //those that are om the edges
 void * applyFilter(void * v, int rows, int cols){
 
-    unsigned char ** c = v;
+	unsigned char ** c = v;
 
-    //Allocate space for a copy of the given 2d array
-    unsigned char ** filtered = get2DArray(rows, cols);
+	//Allocate space for a copy of the given 2d array
+	unsigned char ** filtered = get2DArray(rows, cols);
 
-    //Apply filter
-    for(int i=1; i<rows-1; i++){
-        for(int j=1; j<cols-1; j++){
-            filtered[i][j] = c[i-1][j-1]*((double)1/16)
-                           + c[i][j-1]*((double)2/16)
-                           + c[i+1][j-1]*((double)1/16)
-                           + c[i-1][j]*((double)2/16)
-                           + c[i][j]*((double)4/16)
-                           + c[i+1][j]*((double)2/16)
-                           + c[i-1][j+1]*((double)1/16)
-                           + c[i][j+1]*((double)2/16)
-                           + c[i+1][j+1]*((double)1/16);
-        }
-    }
+	//Apply filter
+	for(int i=1; i<rows-1; i++){
+		for(int j=1; j<cols-1; j++){
+			filtered[i][j] = c[i-1][j-1]*((double)1/16)
+						   + c[i][j-1]*((double)2/16)
+						   + c[i+1][j-1]*((double)1/16)
+						   + c[i-1][j]*((double)2/16)
+						   + c[i][j]*((double)4/16)
+						   + c[i+1][j]*((double)2/16)
+						   + c[i-1][j+1]*((double)1/16)
+						   + c[i][j+1]*((double)2/16)
+						   + c[i+1][j+1]*((double)1/16);
+		}
+	}
 
-    //I should be freeing malloc'd memory here
-    return filtered;
+	//I should be freeing malloc'd memory here
+	return filtered;
 }
 
 int main(int argc, char *argv[]) {
@@ -152,7 +152,7 @@ int main(int argc, char *argv[]) {
 
 	if (my_rank == 0) {
 		/* Fill in array from file*/
-        FILE *inputFile = fopen("waterfall_grey_1920_2520.raw", "r");
+		FILE *inputFile = fopen("waterfall_grey_1920_2520.raw", "r");
 
 		for( i=0; i<NROWS; i++ ){
 			for( j=0; j<NCOLS; j++ ){
@@ -483,19 +483,19 @@ int main(int argc, char *argv[]) {
 
 	}
 
-    for(int i=0; i<10; i++)
-        myArray = applyFilter(myArray, (NROWS/sqrt_comm_sz), (NCOLS/sqrt_comm_sz));
+	for(int i=0; i<10; i++)
+		myArray = applyFilter(myArray, (NROWS/sqrt_comm_sz), (NCOLS/sqrt_comm_sz));
 
 	MPI_Gatherv(*myArray,(NROWS/sqrt_comm_sz)*(NCOLS/sqrt_comm_sz),MPI_UNSIGNED_CHAR,*final2D,counts,displs,resizedtype,0,MPI_COMM_WORLD );
 
 	if( my_rank == 0 ){
 
-        FILE *outputFile = fopen("mpiOutput.raw", "w");
+		FILE *outputFile = fopen("mpiOutput.raw", "w");
 
 		for( i=0; i<NROWS; i++ ){
 			for( j=0; j<NCOLS; j++ ){
-                //printf("%c", final2D[i][j]);
-                fputc(final2D[i][j], outputFile);
+				//printf("%c", final2D[i][j]);
+				fputc(final2D[i][j], outputFile);
 			}
 		}
 	}
