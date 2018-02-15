@@ -16,6 +16,7 @@
 #define BOTTOM      my_rank+sqrt_comm_sz
 #define BOTTOMRIGHT my_rank+sqrt_comm_sz+1
 
+
 unsigned char ** get2DArray(int rows, int cols){
     unsigned char * space = malloc(rows * cols * sizeof(unsigned char));
     unsigned char ** array = malloc(rows * sizeof(unsigned char*));
