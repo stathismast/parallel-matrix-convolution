@@ -4,8 +4,8 @@
 #include <string.h>
 #include <math.h>
 
-#define NROWS 16
-#define NCOLS 24
+#define NROWS 2520
+#define NCOLS 1920
 
 #define TOPLEFT     my_rank-sqrt_comm_sz-1
 #define TOP         my_rank-sqrt_comm_sz
@@ -25,6 +25,34 @@ unsigned char ** get2DArray(int rows, int cols){
     }
 
     return array;
+}
+
+//Applies a filter to every pixel except
+//those that are om the edges
+void * applyFilter(void * v, int rows, int cols){
+
+    unsigned char ** c = v;
+
+    //Allocate space for a copy of the given 2d array
+    unsigned char ** filtered = get2DArray(rows, cols);
+
+    //Apply filter
+    for(int i=1; i<rows-1; i++){
+        for(int j=1; j<cols-1; j++){
+            filtered[i][j] = c[i-1][j-1]*((double)1/16)
+                           + c[i][j-1]*((double)2/16)
+                           + c[i+1][j-1]*((double)1/16)
+                           + c[i-1][j]*((double)2/16)
+                           + c[i][j]*((double)4/16)
+                           + c[i+1][j]*((double)2/16)
+                           + c[i-1][j+1]*((double)1/16)
+                           + c[i][j+1]*((double)2/16)
+                           + c[i+1][j+1]*((double)1/16);
+        }
+    }
+
+    //I should be freeing malloc'd memory here
+    return filtered;
 }
 
 int main(int argc, char *argv[]) {
@@ -120,11 +148,14 @@ int main(int argc, char *argv[]) {
 	MPI_Type_vector(NROWS/sqrt_comm_sz,1,NCOLS/sqrt_comm_sz,MPI_UNSIGNED_CHAR,&column);
 	MPI_Type_commit(&column);
 
+
 	if (my_rank == 0) {
-		/* Fill in array */
+		/* Fill in array from file*/
+        FILE *inputFile = fopen("waterfall_grey_1920_2520.raw", "r");
+
 		for( i=0; i<NROWS; i++ ){
 			for( j=0; j<NCOLS; j++ ){
-				array2D[i][j] = '0'+i ;
+				array2D[i][j] = fgetc(inputFile);
 			}
 		}
 	}
@@ -133,17 +164,6 @@ int main(int argc, char *argv[]) {
 				 resizedtype,
 				 *myArray,(NROWS/sqrt_comm_sz)*(NCOLS/sqrt_comm_sz),MPI_UNSIGNED_CHAR, /* I'm recieving (NROWS/sqrt_comm_sz)*(NCOLS/sqrt_comm_sz) MPI_UNSIGNED_CHARs into myArray */
 				 0,MPI_COMM_WORLD );
-
-	/* Print subArrays */
-	printf("SubArray of process %d is :\n",my_rank );
-	for( i=0; i<NROWS/sqrt_comm_sz; i++ ){
-		for( j=0; j<NCOLS/sqrt_comm_sz; j++ ){
-			printf("%c ",myArray[i][j] );
-			myArray[i][j] = 'a'+ my_rank;
-		}
-		printf("\n" );
-	}
-	printf("\n\n");
 
 	/* Send and recieve rows,columns and corners */
 	if( my_rank < sqrt_comm_sz && my_rank%sqrt_comm_sz == 0 ){ //top left corner
@@ -462,76 +482,21 @@ int main(int argc, char *argv[]) {
 
 	}
 
-	/* Print recieved rows,columns and corners */
-	printf("Im process %d and I recieved:\n",my_rank );
-
-	if( topRow != NULL ){
-		printf("\ttopRow:\n\t");
-		for( i=0; i<NCOLS/sqrt_comm_sz; i++ ){
-			printf("%c ",topRow[i] );
-		}
-		printf("\n");
-	}
-
-	if( bottomRow != NULL ){
-		printf("\tbottomRow:\n\t");
-		for( i=0; i<NCOLS/sqrt_comm_sz; i++ ){
-			printf("%c ",bottomRow[i] );
-		}
-		printf("\n");
-	}
-
-	if( leftCol != NULL ){
-		printf("\tleftCol:\n");
-		for( i=0; i<NROWS/sqrt_comm_sz; i++ ){
-			printf("\t%c\n",leftCol[i] );
-		}
-		printf("\n");
-	}
-
-	if( rightCol != NULL ){
-		printf("\trightCol:\n");
-		for( i=0; i<(NROWS/sqrt_comm_sz); i++ ){
-			printf("\t%c\n",rightCol[i] );
-		}
-		printf("\n");
-	}
-
-	if( leftUpCorn != ( ( unsigned char) -1 ) ){
-		printf("\tleftUpCorn:\n");
-		printf("\t%c\n",leftUpCorn );
-		printf("\n" );
-	}
-
-	if( rightUpCorn != ( ( unsigned char) -1 ) ){
-		printf("\trightUpCorn :\n");
-		printf("\t%c\n",rightUpCorn );
-		printf("\n" );
-	}
-
-	if( leftDownCorn != ( ( unsigned char) -1 ) ){
-		printf("\tleftDownCorn:\n");
-		printf("\t%c\n",leftDownCorn );
-		printf("\n" );
-	}
-
-	if( rightDownCorn != ( ( unsigned char) -1 ) ){
-		printf("\trightDownCorn:\n");
-		printf("\t%c\n",rightDownCorn );
-		printf("\n" );
-	}
+    for(int i=0; i<10; i++)
+        myArray = applyFilter(myArray, (NROWS/sqrt_comm_sz), (NCOLS/sqrt_comm_sz));
 
 	MPI_Gatherv(*myArray,(NROWS/sqrt_comm_sz)*(NCOLS/sqrt_comm_sz),MPI_UNSIGNED_CHAR,*final2D,counts,displs,resizedtype,0,MPI_COMM_WORLD );
 
 	if( my_rank == 0 ){
-		printf("final2D is :\n");
+
+        FILE *outputFile = fopen("mpiOutput.raw", "w");
+
 		for( i=0; i<NROWS; i++ ){
 			for( j=0; j<NCOLS; j++ ){
-				printf("%c ",final2D[i][j] );
+                //printf("%c", final2D[i][j]);
+                fputc(final2D[i][j], outputFile);
 			}
-			printf("\n" );
 		}
-		printf("\n\n");
 	}
 
 
