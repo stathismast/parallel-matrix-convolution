@@ -782,18 +782,64 @@ int main(int argc, char *argv[]) {
 		}
 
 		/* Apply filter on the leftDownCorn */
-		if( myRecievedItems.leftDownCorn == 2 ){
-			// myFinalArray[i][j] = myArray[i-1][j-1]*((double)1/16) 	/* leftUpCorn */
-			// 				   + myArray[i][j-1]*((double)2/16)		/* left */
-			// 				   + myArray[i+1][j-1]*((double)1/16)	/* leftDownCorn */
-			// 				   + myArray[i-1][j]*((double)2/16)		/* up */
-			// 				   + myArray[i][j]*((double)4/16)		/* itself */
-			// 				   + myArray[i+1][j]*((double)2/16)		/* down */
-			// 				   + myArray[i-1][j+1]*((double)1/16)	/* rightUpCorn */
-			// 				   + myArray[i][j+1]*((double)2/16)		/* right */
-			// 				   + myArray[i+1][j+1]*((double)1/16);	/* rightDownCorn*/
+		if( (myRecievedItems.bottomRow == 2) && (myRecievedItems.leftCol == 2) && (myRecievedItems.leftDownCorn == 2) ){
+			//j=0
+			int r = NROWS/sqrt_comm_sz - 1 ;
+
+			myFinalArray[r][0] = myArray[r][0]*((double)1/16) 		/* leftUpCorn */	/* <<< WE USE ITSELF */
+							   + myArray[r][0]*((double)2/16)		/* left */			/* <<< WE USE ITSELF */
+							   + myArray[r][0]*((double)1/16)		/* leftDownCorn */	/* <<< WE USE ITSELF */
+							   + myArray[r-1][0]*((double)2/16)		/* up */
+							   + myArray[r][0]*((double)4/16)		/* itself */
+							   + myArray[r][0]*((double)2/16)		/* down */			/* <<< WE USE ITSELF */
+							   + myArray[r-1][0+1]*((double)1/16)	/* rightUpCorn */
+							   + myArray[r][0+1]*((double)2/16)		/* right */
+							   + myArray[r][0]*((double)1/16);		/* rightDownCorn*/	/* <<< WE USE ITSELF */
+
 		}
-		else if( myRecievedItems.leftDownCorn == 1 ){
+		else if( (myRecievedItems.bottomRow == 2) && (myRecievedItems.leftCol == 1) && (myRecievedItems.leftDownCorn == 2) ){
+			//j=0
+			int r = NROWS/sqrt_comm_sz - 1 ;
+
+			myFinalArray[r][0] = leftCol[r-1]*((double)1/16) 		/* leftUpCorn */
+							   + leftCol[r]*((double)2/16)			/* left */
+							   + myArray[r][0]*((double)1/16)		/* leftDownCorn */	/* <<< WE USE ITSELF */
+							   + myArray[r-1][0]*((double)2/16)		/* up */
+							   + myArray[r][0]*((double)4/16)		/* itself */
+							   + myArray[r][0]*((double)2/16)		/* down */			/* <<< WE USE ITSELF */
+							   + myArray[r-1][0+1]*((double)1/16)	/* rightUpCorn */
+							   + myArray[r][0+1]*((double)2/16)		/* right */
+							   + myArray[r][0]*((double)1/16);		/* rightDownCorn*/	/* <<< WE USE ITSELF */
+
+		}
+		else if( (myRecievedItems.bottomRow == 1) && (myRecievedItems.leftCol == 2) && (myRecievedItems.leftDownCorn == 2) ){
+			//j=0
+			int r = NROWS/sqrt_comm_sz - 1 ;
+
+			myFinalArray[r][0] = myArray[r][0]*((double)1/16) 		/* leftUpCorn */	/* <<< WE USE ITSELF */
+							   + myArray[r][0]*((double)2/16)		/* left */			/* <<< WE USE ITSELF */
+							   + myArray[r][0]*((double)1/16)		/* leftDownCorn */	/* <<< WE USE ITSELF */
+							   + myArray[r-1][0]*((double)2/16)		/* up */
+							   + myArray[r][0]*((double)4/16)		/* itself */
+							   + bottomRow[0]*((double)2/16)		/* down */
+							   + myArray[r-1][0+1]*((double)1/16)	/* rightUpCorn */
+							   + myArray[r][0+1]*((double)2/16)		/* right */
+							   + bottomRow[1]*((double)1/16);		/* rightDownCorn*/
+
+		}
+		else if( (myRecievedItems.bottomRow == 1) && (myRecievedItems.leftCol == 1) && (myRecievedItems.leftDownCorn == 1) ){
+			//j=0
+			int r = NROWS/sqrt_comm_sz - 1 ;
+
+			myFinalArray[r][0] = leftCol[r-1]*((double)1/16) 		/* leftUpCorn */
+							   + leftCol[r]*((double)2/16)			/* left */
+							   + leftDownCorn*((double)1/16)		/* leftDownCorn */
+							   + myArray[r-1][0]*((double)2/16)		/* up */
+							   + myArray[r][0]*((double)4/16)		/* itself */
+							   + bottomRow[0]*((double)2/16)		/* down */
+							   + myArray[r-1][0+1]*((double)1/16)	/* rightUpCorn */
+							   + myArray[r][0+1]*((double)2/16)		/* right */
+							   + bottomRow[1]*((double)1/16);		/* rightDownCorn*/
 
 		}
 
