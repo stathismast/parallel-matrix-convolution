@@ -531,7 +531,7 @@ int main(int argc, char *argv[]) {
 
 			/* Recieve leftDownCorn from my leftdown process */
 			MPI_Recv(&leftDownCorn,1,MPI_UNSIGNED_CHAR,my_rank+sqrt_comm_sz-1,0,MPI_COMM_WORLD, &status);
-			myRecievedItems.rightDownCorn = 1;
+			myRecievedItems.leftDownCorn = 1;
 
 			/* Recieve rightUpCorn from my rightup rocess */
 			MPI_Recv(&rightUpCorn,1,MPI_UNSIGNED_CHAR,my_rank-sqrt_comm_sz+1,0,MPI_COMM_WORLD, &status);
@@ -543,8 +543,8 @@ int main(int argc, char *argv[]) {
 
 			/* Recieve rightDownCorn from my rightdown process */
 			MPI_Recv(&rightDownCorn,1,MPI_UNSIGNED_CHAR,my_rank+sqrt_comm_sz+1,0,MPI_COMM_WORLD, &status);
-			myRecievedItems.leftDownCorn = 1;
-
+			myRecievedItems.rightDownCorn = 1;
+			
 		}
 
 		/* Apply filter on the inner pixels */

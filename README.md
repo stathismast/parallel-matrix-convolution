@@ -79,3 +79,13 @@ P: 16/02/2018
 ΟΔΗΓΙΕΣ ΤΡΕΞΙΜΑΤΟΣ: mpicc -o finalOnTheWay finalOnTheWay.c -lm ; mpiexec -n 4 finalOnTheWay
                     mpicc -o finalOnTheWay finalOnTheWay.c -lm ; mpiexec -n 16 finalOnTheWay
 ------------------------------------------------------------------------------------------------------------
+
+P: 18/02/2018
+# finalGrey.c
+>Σχεδόν το τελικό πρόγραμμα για εφαρμογή φίλτρου στην grey εικόνα με χρήση MPI.
+>Μένουν:1)Περίπτωση για 1 process
+	2)Reduce και έλεγχος αν είναι το ίδιο το τελευταίο με το προτελευταίο
+ 
+ΟΔΗΓΙΕΣ ΤΡΕΞΙΜΑΤΟΣ: mpicc -o finalGrey finalGrey.c -lm ; mpiexec -n 4 finalGrey
+                    mpicc -o finalGrey finalGrey.c -lm ; mpiexec -n 16 finalGrey
+------------------------------------------------------------------------------------------------------------
