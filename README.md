@@ -89,3 +89,11 @@ P: 18/02/2018
 ΟΔΗΓΙΕΣ ΤΡΕΞΙΜΑΤΟΣ: mpicc -o finalGrey finalGrey.c -lm ; mpiexec -n 4 finalGrey
                     mpicc -o finalGrey finalGrey.c -lm ; mpiexec -n 16 finalGrey
 ------------------------------------------------------------------------------------------------------------
+
+P: 18/02/2018
+# finalColor1.c
+>Uses 3 Scatter calls for each color channel individually. Doesn't use irecv yet. Will be updated in the near future.
+ 
+ΟΔΗΓΙΕΣ ΤΡΕΞΙΜΑΤΟΣ: mpicc -o finalColor1 finalColor1.c -lm ; mpiexec -n 4 finalColor1
+                    mpicc -o finalColor1 finalColor1.c -lm ; mpiexec -n 16 finalColor1
+------------------------------------------------------------------------------------------------------------
