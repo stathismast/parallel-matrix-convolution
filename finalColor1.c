@@ -89,19 +89,26 @@ int main(int argc, char *argv[]) {
 
 	unsigned char leftUpCorn,rightUpCorn,rightDownCorn,leftDownCorn;
 
-	typedef struct recievedItems{ /* 0 -> not been recieved yet, 1 -> recieved , 2 -> mustn't be recieved  */
-		char topRow;
-		char bottomRow;
-		char leftCol;
-		char rightCol;
-		char leftUpCorn;
-		char rightUpCorn;
-		char rightDownCorn;
-		char leftDownCorn;
-	} recievedItems;
+	typedef struct Item{
+		char recieved;	/* 0 -> not been recieved yet, 1 -> recieved , 2 -> mustn't be recieved  */
+		MPI_Request request;
+	} Item;
 
-	recievedItems myRecievedItems;
+	typedef struct allItems{
+		Item topRow;
+		Item bottomRow;
+		Item leftCol;
+		Item rightCol;
+		Item leftUpCorn;
+		Item rightUpCorn;
+		Item rightDownCorn;
+		Item leftDownCorn;
+	} allItems;
 
+	allItems myItems;
+
+	int counterItems = 0; /* How many items we have recieved */
+	int flag = 0;
 	int i,j,k;
 
 	/* Arguments of create_subarray */
@@ -188,7 +195,6 @@ int main(int argc, char *argv[]) {
 
 	}
 
-
 	for(int k=0; k<3; k++){
 
 		if(k==0) {array2D = arrayR; final2D = finalR;}
@@ -202,14 +208,14 @@ int main(int argc, char *argv[]) {
 
 		for(i=0; i<20; i++){
 
-			myRecievedItems.topRow = 0;
-			myRecievedItems.bottomRow = 0;
-			myRecievedItems.leftCol = 0;
-			myRecievedItems.rightCol = 0;
-			myRecievedItems.leftUpCorn = 0;
-			myRecievedItems.rightUpCorn = 0;
-			myRecievedItems.rightDownCorn = 0;
-			myRecievedItems.leftDownCorn = 0;
+			myItems.topRow.recieved = 0;
+			myItems.bottomRow.recieved = 0;
+			myItems.leftCol.recieved = 0;
+			myItems.rightCol.recieved = 0;
+			myItems.leftUpCorn.recieved = 0;
+			myItems.rightUpCorn.recieved = 0;
+			myItems.rightDownCorn.recieved = 0;
+			myItems.leftDownCorn.recieved = 0;
 
 			/* Send and recieve rows,columns and corners */
 			if( (my_rank < sqrt_comm_sz) && ( (my_rank%sqrt_comm_sz) == 0 ) ){ //top left corner
@@ -224,23 +230,20 @@ int main(int argc, char *argv[]) {
 				MPI_Isend(&myArray[(NROWS/sqrt_comm_sz)-1][(NCOLS/sqrt_comm_sz)-1],1,MPI_UNSIGNED_CHAR,my_rank+sqrt_comm_sz+1,0,MPI_COMM_WORLD,&request);
 
 				/* Recieve rightCol from my right process */
-				MPI_Recv(rightCol,(NROWS/sqrt_comm_sz),MPI_UNSIGNED_CHAR,my_rank+1,0,MPI_COMM_WORLD, &status);
-				myRecievedItems.rightCol = 1;
+				MPI_Irecv(rightCol,(NROWS/sqrt_comm_sz),MPI_UNSIGNED_CHAR,my_rank+1,0,MPI_COMM_WORLD, &myItems.rightCol.request);
 
 				/* Recieve bottomRow from my bottom process */
-				MPI_Recv(bottomRow,1,row,my_rank+sqrt_comm_sz,0,MPI_COMM_WORLD, &status);
-				myRecievedItems.bottomRow = 1;
+				MPI_Irecv(bottomRow,1,row,my_rank+sqrt_comm_sz,0,MPI_COMM_WORLD, &myItems.bottomRow.request);
 
 				/* Recieve rightDownCorn from my rightdown process */
-				MPI_Recv(&rightDownCorn,1,MPI_UNSIGNED_CHAR,my_rank+sqrt_comm_sz+1,0,MPI_COMM_WORLD, &status);
-				myRecievedItems.rightDownCorn = 1;
+				MPI_Irecv(&rightDownCorn,1,MPI_UNSIGNED_CHAR,my_rank+sqrt_comm_sz+1,0,MPI_COMM_WORLD, &myItems.rightDownCorn.request);
 
-				/* What i didn't recieve */
-				myRecievedItems.topRow = 2;
-				myRecievedItems.leftCol = 2;
-				myRecievedItems.leftUpCorn = 2;
-				myRecievedItems.rightUpCorn = 2;
-				myRecievedItems.leftDownCorn = 2;
+				/* What i won't recieve */
+				myItems.topRow.recieved = 2;
+				myItems.leftCol.recieved = 2;
+				myItems.leftUpCorn.recieved = 2;
+				myItems.rightUpCorn.recieved = 2;
+				myItems.leftDownCorn.recieved = 2;
 
 			}
 			else if( (my_rank < sqrt_comm_sz) && ( (my_rank%sqrt_comm_sz) == (sqrt_comm_sz-1) ) ){ //top right corner
@@ -255,23 +258,20 @@ int main(int argc, char *argv[]) {
 				MPI_Isend(myArray[(NROWS/sqrt_comm_sz)-1],1,row,my_rank+sqrt_comm_sz,0,MPI_COMM_WORLD,&request);
 
 				/* Recieve leftCol from my left process */
-				MPI_Recv(leftCol,(NROWS/sqrt_comm_sz),MPI_UNSIGNED_CHAR,my_rank-1,0,MPI_COMM_WORLD, &status);
-				myRecievedItems.leftCol = 1;
+				MPI_Irecv(leftCol,(NROWS/sqrt_comm_sz),MPI_UNSIGNED_CHAR,my_rank-1,0,MPI_COMM_WORLD, &myItems.leftCol.request);
 
 				/* Recieve leftDownCorn from my leftdown process */
-				MPI_Recv(&leftDownCorn,1,MPI_UNSIGNED_CHAR,my_rank+sqrt_comm_sz-1,0,MPI_COMM_WORLD, &status);
-				myRecievedItems.leftDownCorn = 1;
+				MPI_Irecv(&leftDownCorn,1,MPI_UNSIGNED_CHAR,my_rank+sqrt_comm_sz-1,0,MPI_COMM_WORLD, &myItems.leftDownCorn.request);
 
 				/* Recieve bottomRow from my bottom process */
-				MPI_Recv(bottomRow,1,row,my_rank+sqrt_comm_sz,0,MPI_COMM_WORLD, &status);
-				myRecievedItems.bottomRow = 1;
+				MPI_Irecv(bottomRow,1,row,my_rank+sqrt_comm_sz,0,MPI_COMM_WORLD, &myItems.bottomRow.request);
 
-				/* What i didn't recieve */
-				myRecievedItems.topRow = 2;
-				myRecievedItems.rightCol = 2;
-				myRecievedItems.leftUpCorn = 2;
-				myRecievedItems.rightUpCorn = 2;
-				myRecievedItems.rightDownCorn = 2;
+				/* What i won't recieve */
+				myItems.topRow.recieved = 2;
+				myItems.rightCol.recieved = 2;
+				myItems.leftUpCorn.recieved = 2;
+				myItems.rightUpCorn.recieved = 2;
+				myItems.rightDownCorn.recieved = 2;
 
 			}
 			else if( ( my_rank >= (comm_sz-sqrt_comm_sz) ) && ( (my_rank%sqrt_comm_sz) == 0 ) ){ //bottom left corner
@@ -286,23 +286,20 @@ int main(int argc, char *argv[]) {
 				MPI_Isend(&myArray[0][(NCOLS/sqrt_comm_sz)-1],1,column,my_rank+1,0,MPI_COMM_WORLD,&request);
 
 				/* Recieve topRow from my top process */
-				MPI_Recv(topRow,1,row,my_rank-sqrt_comm_sz,0,MPI_COMM_WORLD, &status);
-				myRecievedItems.topRow = 1;
+				MPI_Irecv(topRow,1,row,my_rank-sqrt_comm_sz,0,MPI_COMM_WORLD, &myItems.topRow.request);
 
 				/* Recieve rightUpCorn from my rightup rocess */
-				MPI_Recv(&rightUpCorn,1,MPI_UNSIGNED_CHAR,my_rank-sqrt_comm_sz+1,0,MPI_COMM_WORLD, &status);
-				myRecievedItems.rightUpCorn = 1;
+				MPI_Irecv(&rightUpCorn,1,MPI_UNSIGNED_CHAR,my_rank-sqrt_comm_sz+1,0,MPI_COMM_WORLD, &myItems.rightUpCorn.request);
 
 				/* Recieve rightCol from my right process */
-				MPI_Recv(rightCol,(NROWS/sqrt_comm_sz),MPI_UNSIGNED_CHAR,my_rank+1,0,MPI_COMM_WORLD, &status);
-				myRecievedItems.rightCol = 1;
+				MPI_Irecv(rightCol,(NROWS/sqrt_comm_sz),MPI_UNSIGNED_CHAR,my_rank+1,0,MPI_COMM_WORLD, &myItems.rightCol.request);
 
-				/* What i didn't recieve */
-				myRecievedItems.bottomRow = 2;
-				myRecievedItems.leftCol = 2;
-				myRecievedItems.leftUpCorn = 2;
-				myRecievedItems.rightDownCorn = 2;
-				myRecievedItems.leftDownCorn = 2;
+				/* What i won't recieve */
+				myItems.bottomRow.recieved = 2;
+				myItems.leftCol.recieved = 2;
+				myItems.leftUpCorn.recieved = 2;
+				myItems.rightDownCorn.recieved = 2;
+				myItems.leftDownCorn.recieved = 2;
 
 			}
 			else if( ( my_rank >= (comm_sz-sqrt_comm_sz) ) && ( (my_rank%sqrt_comm_sz) == (sqrt_comm_sz-1) ) ){ //bottom right corner
@@ -317,23 +314,20 @@ int main(int argc, char *argv[]) {
 				MPI_Isend(&myArray[0][0],1,column,my_rank-1,0,MPI_COMM_WORLD,&request);
 
 				/* Recieve leftUpCorn from my left process */
-				MPI_Recv(&leftUpCorn,1,MPI_UNSIGNED_CHAR,my_rank-sqrt_comm_sz-1,0,MPI_COMM_WORLD, &status);
-				myRecievedItems.leftUpCorn = 1;
+				MPI_Irecv(&leftUpCorn,1,MPI_UNSIGNED_CHAR,my_rank-sqrt_comm_sz-1,0,MPI_COMM_WORLD, &myItems.leftUpCorn.request);
 
 				/* Recieve topRow from my top process */
-				MPI_Recv(topRow,1,row,my_rank-sqrt_comm_sz,0,MPI_COMM_WORLD, &status);
-				myRecievedItems.topRow = 1;
+				MPI_Irecv(topRow,1,row,my_rank-sqrt_comm_sz,0,MPI_COMM_WORLD, &myItems.topRow.request);
 
 				/* Recieve leftCol from my left process */
-				MPI_Recv(leftCol,(NROWS/sqrt_comm_sz),MPI_UNSIGNED_CHAR,my_rank-1,0,MPI_COMM_WORLD, &status);
-				myRecievedItems.leftCol = 1;
+				MPI_Irecv(leftCol,(NROWS/sqrt_comm_sz),MPI_UNSIGNED_CHAR,my_rank-1,0,MPI_COMM_WORLD, &myItems.leftCol.request);
 
-				/* What i didn't recieve */
-				myRecievedItems.bottomRow = 2;
-				myRecievedItems.rightCol = 2;
-				myRecievedItems.rightUpCorn = 2;
-				myRecievedItems.rightDownCorn = 2;
-				myRecievedItems.leftDownCorn = 2;
+				/* What i won't recieve */
+				myItems.bottomRow.recieved = 2;
+				myItems.rightCol.recieved = 2;
+				myItems.rightUpCorn.recieved = 2;
+				myItems.rightDownCorn.recieved = 2;
+				myItems.leftDownCorn.recieved = 2;
 
 			}
 			else if( my_rank < sqrt_comm_sz ){ //top row
@@ -354,29 +348,24 @@ int main(int argc, char *argv[]) {
 				MPI_Isend(&myArray[(NROWS/sqrt_comm_sz)-1][0],1,MPI_UNSIGNED_CHAR,my_rank+sqrt_comm_sz-1,0,MPI_COMM_WORLD,&request);
 
 				/* Recieve rightCol from my right process */
-				MPI_Recv(rightCol,(NROWS/sqrt_comm_sz),MPI_UNSIGNED_CHAR,my_rank+1,0,MPI_COMM_WORLD, &status);
-				myRecievedItems.rightCol = 1;
+				MPI_Irecv(rightCol,(NROWS/sqrt_comm_sz),MPI_UNSIGNED_CHAR,my_rank+1,0,MPI_COMM_WORLD, &myItems.rightCol.request);
 
 				/* Recieve bottomRow from my bottom process */
-				MPI_Recv(bottomRow,1,row,my_rank+sqrt_comm_sz,0,MPI_COMM_WORLD, &status);
-				myRecievedItems.bottomRow = 1;
+				MPI_Irecv(bottomRow,1,row,my_rank+sqrt_comm_sz,0,MPI_COMM_WORLD, &myItems.bottomRow.request);
 
 				/* Recieve rightDownCorn from my rightdown process */
-				MPI_Recv(&rightDownCorn,1,MPI_UNSIGNED_CHAR,my_rank+sqrt_comm_sz+1,0,MPI_COMM_WORLD, &status);
-				myRecievedItems.rightDownCorn = 1;
+				MPI_Irecv(&rightDownCorn,1,MPI_UNSIGNED_CHAR,my_rank+sqrt_comm_sz+1,0,MPI_COMM_WORLD, &myItems.rightDownCorn.request);
 
 				/* Recieve leftCol from my left process */
-				MPI_Recv(leftCol,(NROWS/sqrt_comm_sz),MPI_UNSIGNED_CHAR,my_rank-1,0,MPI_COMM_WORLD, &status);
-				myRecievedItems.leftCol = 1;
+				MPI_Irecv(leftCol,(NROWS/sqrt_comm_sz),MPI_UNSIGNED_CHAR,my_rank-1,0,MPI_COMM_WORLD, &myItems.leftCol.request);
 
 				/* Recieve leftDownCorn from my leftdown process */
-				MPI_Recv(&leftDownCorn,1,MPI_UNSIGNED_CHAR,my_rank+sqrt_comm_sz-1,0,MPI_COMM_WORLD, &status);
-				myRecievedItems.leftDownCorn = 1;
+				MPI_Irecv(&leftDownCorn,1,MPI_UNSIGNED_CHAR,my_rank+sqrt_comm_sz-1,0,MPI_COMM_WORLD, &myItems.leftDownCorn.request);
 
-				/* What i didn't recieve */
-				myRecievedItems.topRow = 2;
-				myRecievedItems.leftUpCorn = 2;
-				myRecievedItems.rightUpCorn = 2;
+				/* What i won't recieve */
+				myItems.topRow.recieved = 2;
+				myItems.leftUpCorn.recieved = 2;
+				myItems.rightUpCorn.recieved = 2;
 
 			}
 			else if( my_rank >= (comm_sz - sqrt_comm_sz) ){ //bottom row
@@ -397,29 +386,24 @@ int main(int argc, char *argv[]) {
 				MPI_Isend(&myArray[0][0],1,column,my_rank-1,0,MPI_COMM_WORLD,&request);
 
 				/* Recieve topRow from my top process */
-				MPI_Recv(topRow,1,row,my_rank-sqrt_comm_sz,0,MPI_COMM_WORLD, &status);
-				myRecievedItems.topRow = 1;
+				MPI_Irecv(topRow,1,row,my_rank-sqrt_comm_sz,0,MPI_COMM_WORLD, &myItems.topRow.request);
 
 				/* Recieve rightUpCorn from my rightup rocess */
-				MPI_Recv(&rightUpCorn,1,MPI_UNSIGNED_CHAR,my_rank-sqrt_comm_sz+1,0,MPI_COMM_WORLD, &status);
-				myRecievedItems.rightUpCorn = 1;
+				MPI_Irecv(&rightUpCorn,1,MPI_UNSIGNED_CHAR,my_rank-sqrt_comm_sz+1,0,MPI_COMM_WORLD, &myItems.rightUpCorn.request);
 
 				/* Recieve rightCol from my right process */
-				MPI_Recv(rightCol,(NROWS/sqrt_comm_sz),MPI_UNSIGNED_CHAR,my_rank+1,0,MPI_COMM_WORLD, &status);
-				myRecievedItems.rightCol = 1;
+				MPI_Irecv(rightCol,(NROWS/sqrt_comm_sz),MPI_UNSIGNED_CHAR,my_rank+1,0,MPI_COMM_WORLD, &myItems.rightCol.request);
 
 				/* Recieve leftUpCorn from my left process */
-				MPI_Recv(&leftUpCorn,1,MPI_UNSIGNED_CHAR,my_rank-sqrt_comm_sz-1,0,MPI_COMM_WORLD, &status);
-				myRecievedItems.leftUpCorn = 1;
+				MPI_Irecv(&leftUpCorn,1,MPI_UNSIGNED_CHAR,my_rank-sqrt_comm_sz-1,0,MPI_COMM_WORLD, &myItems.leftUpCorn.request);
 
 				/* Recieve leftCol from my left process */
-				MPI_Recv(leftCol,(NROWS/sqrt_comm_sz),MPI_UNSIGNED_CHAR,my_rank-1,0,MPI_COMM_WORLD, &status);
-				myRecievedItems.leftCol = 1;
+				MPI_Irecv(leftCol,(NROWS/sqrt_comm_sz),MPI_UNSIGNED_CHAR,my_rank-1,0,MPI_COMM_WORLD, &myItems.leftCol.request);
 
-				/* What i didn't recieve */
-				myRecievedItems.bottomRow = 2;
-				myRecievedItems.rightDownCorn = 2;
-				myRecievedItems.leftDownCorn = 2;
+				/* What i won't recieve */
+				myItems.bottomRow.recieved = 2;
+				myItems.rightDownCorn.recieved = 2;
+				myItems.leftDownCorn.recieved = 2;
 
 			}
 			else if( (my_rank%sqrt_comm_sz) == 0 ){ //leftmost column
@@ -440,29 +424,24 @@ int main(int argc, char *argv[]) {
 				MPI_Isend(&myArray[(NROWS/sqrt_comm_sz)-1][(NCOLS/sqrt_comm_sz)-1],1,MPI_UNSIGNED_CHAR,my_rank+sqrt_comm_sz+1,0,MPI_COMM_WORLD,&request);
 
 				/* Recieve topRow from my top process */
-				MPI_Recv(topRow,1,row,my_rank-sqrt_comm_sz,0,MPI_COMM_WORLD, &status);
-				myRecievedItems.topRow = 1;
+				MPI_Irecv(topRow,1,row,my_rank-sqrt_comm_sz,0,MPI_COMM_WORLD, &myItems.topRow.request);
 
 				/* Recieve rightUpCorn from my rightup rocess */
-				MPI_Recv(&rightUpCorn,1,MPI_UNSIGNED_CHAR,my_rank-sqrt_comm_sz+1,0,MPI_COMM_WORLD, &status);
-				myRecievedItems.rightUpCorn = 1;
+				MPI_Irecv(&rightUpCorn,1,MPI_UNSIGNED_CHAR,my_rank-sqrt_comm_sz+1,0,MPI_COMM_WORLD, &myItems.rightUpCorn.request);
 
 				/* Recieve rightCol from my right process */
-				MPI_Recv(rightCol,(NROWS/sqrt_comm_sz),MPI_UNSIGNED_CHAR,my_rank+1,0,MPI_COMM_WORLD, &status);
-				myRecievedItems.rightCol = 1;
+				MPI_Irecv(rightCol,(NROWS/sqrt_comm_sz),MPI_UNSIGNED_CHAR,my_rank+1,0,MPI_COMM_WORLD, &myItems.rightCol.request);
 
 				/* Recieve bottomRow from my bottom process */
-				MPI_Recv(bottomRow,1,row,my_rank+sqrt_comm_sz,0,MPI_COMM_WORLD, &status);
-				myRecievedItems.bottomRow = 1;
+				MPI_Irecv(bottomRow,1,row,my_rank+sqrt_comm_sz,0,MPI_COMM_WORLD, &myItems.bottomRow.request);
 
 				/* Recieve rightDownCorn from my rightdown process */
-				MPI_Recv(&rightDownCorn,1,MPI_UNSIGNED_CHAR,my_rank+sqrt_comm_sz+1,0,MPI_COMM_WORLD, &status);
-				myRecievedItems.rightDownCorn = 1;
+				MPI_Irecv(&rightDownCorn,1,MPI_UNSIGNED_CHAR,my_rank+sqrt_comm_sz+1,0,MPI_COMM_WORLD, &myItems.rightDownCorn.request);
 
-				/* What i didn't recieve */
-				myRecievedItems.leftCol = 2;
-				myRecievedItems.leftUpCorn = 2;
-				myRecievedItems.leftDownCorn = 2;
+				/* What i won't recieve */
+				myItems.leftCol.recieved = 2;
+				myItems.leftUpCorn.recieved = 2;
+				myItems.leftDownCorn.recieved = 2;
 
 			}
 			else if( (my_rank%sqrt_comm_sz) == (sqrt_comm_sz-1) ){ //rightmost column
@@ -483,29 +462,24 @@ int main(int argc, char *argv[]) {
 				MPI_Isend(&myArray[(NROWS/sqrt_comm_sz)-1][0],1,MPI_UNSIGNED_CHAR,my_rank+sqrt_comm_sz-1,0,MPI_COMM_WORLD,&request);
 
 				/* Recieve topRow from my top process */
-				MPI_Recv(topRow,1,row,my_rank-sqrt_comm_sz,0,MPI_COMM_WORLD, &status);
-				myRecievedItems.topRow = 1;
+				MPI_Irecv(topRow,1,row,my_rank-sqrt_comm_sz,0,MPI_COMM_WORLD, &myItems.topRow.request);
 
 				/* Recieve leftUpCorn from my left process */
-				MPI_Recv(&leftUpCorn,1,MPI_UNSIGNED_CHAR,my_rank-sqrt_comm_sz-1,0,MPI_COMM_WORLD, &status);
-				myRecievedItems.leftUpCorn = 1;
+				MPI_Irecv(&leftUpCorn,1,MPI_UNSIGNED_CHAR,my_rank-sqrt_comm_sz-1,0,MPI_COMM_WORLD, &myItems.leftUpCorn.request);
 
 				/* Recieve leftCol from my left process */
-				MPI_Recv(leftCol,(NROWS/sqrt_comm_sz),MPI_UNSIGNED_CHAR,my_rank-1,0,MPI_COMM_WORLD, &status);
-				myRecievedItems.leftCol = 1;
+				MPI_Irecv(leftCol,(NROWS/sqrt_comm_sz),MPI_UNSIGNED_CHAR,my_rank-1,0,MPI_COMM_WORLD, &myItems.leftCol.request);
 
 				/* Recieve bottomRow from my bottom process */
-				MPI_Recv(bottomRow,1,row,my_rank+sqrt_comm_sz,0,MPI_COMM_WORLD, &status);
-				myRecievedItems.bottomRow = 1;
+				MPI_Irecv(bottomRow,1,row,my_rank+sqrt_comm_sz,0,MPI_COMM_WORLD, &myItems.bottomRow.request);
 
 				/* Recieve leftDownCorn from my leftdown process */
-				MPI_Recv(&leftDownCorn,1,MPI_UNSIGNED_CHAR,my_rank+sqrt_comm_sz-1,0,MPI_COMM_WORLD, &status);
-				myRecievedItems.leftDownCorn = 1;
+				MPI_Irecv(&leftDownCorn,1,MPI_UNSIGNED_CHAR,my_rank+sqrt_comm_sz-1,0,MPI_COMM_WORLD, &myItems.leftDownCorn.request);
 
-				/* What i didn't recieve */
-				myRecievedItems.rightCol = 2;
-				myRecievedItems.rightUpCorn = 2;
-				myRecievedItems.rightDownCorn = 2;
+				/* What i won't recieve */
+				myItems.rightCol.recieved = 2;
+				myItems.rightUpCorn.recieved = 2;
+				myItems.rightDownCorn.recieved = 2;
 
 			}
 			else{ //everything in between
@@ -535,478 +509,500 @@ int main(int argc, char *argv[]) {
 				MPI_Isend(&myArray[(NROWS/sqrt_comm_sz)-1][(NCOLS/sqrt_comm_sz)-1],1,MPI_UNSIGNED_CHAR,my_rank+sqrt_comm_sz+1,0,MPI_COMM_WORLD,&request);
 
 				/* Recieve topRow from my top process */
-				MPI_Recv(topRow,1,row,my_rank-sqrt_comm_sz,0,MPI_COMM_WORLD, &status);
-				myRecievedItems.topRow = 1;
+				MPI_Irecv(topRow,1,row,my_rank-sqrt_comm_sz,0,MPI_COMM_WORLD, &myItems.topRow.request);
 
 				/* Recieve leftUpCorn from my left process */
-				MPI_Recv(&leftUpCorn,1,MPI_UNSIGNED_CHAR,my_rank-sqrt_comm_sz-1,0,MPI_COMM_WORLD, &status);
-				myRecievedItems.leftUpCorn = 1;
+				MPI_Irecv(&leftUpCorn,1,MPI_UNSIGNED_CHAR,my_rank-sqrt_comm_sz-1,0,MPI_COMM_WORLD, &myItems.leftUpCorn.request);
 
 				/* Recieve leftCol from my left process */
-				MPI_Recv(leftCol,(NROWS/sqrt_comm_sz),MPI_UNSIGNED_CHAR,my_rank-1,0,MPI_COMM_WORLD, &status);
-				myRecievedItems.leftCol = 1;
+				MPI_Irecv(leftCol,(NROWS/sqrt_comm_sz),MPI_UNSIGNED_CHAR,my_rank-1,0,MPI_COMM_WORLD, &myItems.leftCol.request);
 
 				/* Recieve bottomRow from my bottom process */
-				MPI_Recv(bottomRow,1,row,my_rank+sqrt_comm_sz,0,MPI_COMM_WORLD, &status);
-				myRecievedItems.bottomRow = 1;
+				MPI_Irecv(bottomRow,1,row,my_rank+sqrt_comm_sz,0,MPI_COMM_WORLD, &myItems.bottomRow.request);
 
 				/* Recieve leftDownCorn from my leftdown process */
-				MPI_Recv(&leftDownCorn,1,MPI_UNSIGNED_CHAR,my_rank+sqrt_comm_sz-1,0,MPI_COMM_WORLD, &status);
-				myRecievedItems.rightDownCorn = 1;
+				MPI_Irecv(&leftDownCorn,1,MPI_UNSIGNED_CHAR,my_rank+sqrt_comm_sz-1,0,MPI_COMM_WORLD, &myItems.leftDownCorn.request);
 
 				/* Recieve rightUpCorn from my rightup rocess */
-				MPI_Recv(&rightUpCorn,1,MPI_UNSIGNED_CHAR,my_rank-sqrt_comm_sz+1,0,MPI_COMM_WORLD, &status);
-				myRecievedItems.rightUpCorn = 1;
+				MPI_Irecv(&rightUpCorn,1,MPI_UNSIGNED_CHAR,my_rank-sqrt_comm_sz+1,0,MPI_COMM_WORLD, &myItems.rightUpCorn.request);
 
 				/* Recieve rightCol from my right process */
-				MPI_Recv(rightCol,(NROWS/sqrt_comm_sz),MPI_UNSIGNED_CHAR,my_rank+1,0,MPI_COMM_WORLD, &status);
-				myRecievedItems.rightCol = 1;
+				MPI_Irecv(rightCol,(NROWS/sqrt_comm_sz),MPI_UNSIGNED_CHAR,my_rank+1,0,MPI_COMM_WORLD, &myItems.rightCol.request);
 
 				/* Recieve rightDownCorn from my rightdown process */
-				MPI_Recv(&rightDownCorn,1,MPI_UNSIGNED_CHAR,my_rank+sqrt_comm_sz+1,0,MPI_COMM_WORLD, &status);
-				myRecievedItems.leftDownCorn = 1;
+				MPI_Irecv(&rightDownCorn,1,MPI_UNSIGNED_CHAR,my_rank+sqrt_comm_sz+1,0,MPI_COMM_WORLD, &myItems.rightDownCorn.request);
 
 			}
 
 			/* Apply filter on the inner pixels */
 			applyFilter(myArray,myFinalArray,(NROWS/sqrt_comm_sz), (NCOLS/sqrt_comm_sz));
 
-			/* Apply filter on the inner topRow */
-			if( myRecievedItems.topRow == 2 ){
-				// i=0
-				for( j=3; j<(NCOLS/sqrt_comm_sz)-3; j++ ){
-					myFinalArray[0][j] = myArray[0][j]*((double)1/16) 		/* leftUpCorn */	/* <<< WE USE ITSELF */
-									   + myArray[0][j-3]*((double)2/16)		/* left */
-									   + myArray[0+1][j-3]*((double)1/16)	/* leftDownCorn */
-									   + myArray[0][j]*((double)2/16)		/* up */		/* <<< WE USE ITSELF */
-									   + myArray[0][j]*((double)4/16)		/* itself */
-									   + myArray[0+1][j]*((double)2/16)		/* down */
-									   + myArray[0][j]*((double)1/16)		/* rightUpCorn */ /* <<< WE USE ITSELF */
-									   + myArray[0][j+3]*((double)2/16)		/* right */
-									   + myArray[0+1][j+3]*((double)1/16);	/* rightDownCorn*/
+			counterItems = 0;
+
+			/* Check what we have recieved and apply filter to these items */
+			while( counterItems < 8 ){
+
+				/* Apply filter on the inner topRow */
+				if( myItems.topRow.recieved == 0 ){
+
+					MPI_Test(&myItems.topRow.request,&flag,&status);
+					if( flag ){
+						// i=0
+						for( j=1; j<(NCOLS/sqrt_comm_sz)-1; j++ ){
+							myFinalArray[0][j] = topRow[j-1]*((double)1/16) 		/* leftUpCorn */
+											   + myArray[0][j-1]*((double)2/16)		/* left */
+											   + myArray[0+1][j-1]*((double)1/16)	/* leftDownCorn */
+											   + topRow[j]*((double)2/16)			/* up */
+											   + myArray[0][j]*((double)4/16)		/* itself */
+											   + myArray[0+1][j]*((double)2/16)		/* down */
+											   + topRow[j+1]*((double)1/16)			/* rightUpCorn */
+											   + myArray[0][j+1]*((double)2/16)		/* right */
+											   + myArray[0+1][j+1]*((double)1/16);	/* rightDownCorn*/
+						}
+						myItems.topRow.recieved = 1;
+						counterItems ++;
+						flag = 0 ;
+					}
+
 				}
-			}
-			else if( myRecievedItems.topRow == 1 ){
-				// i=0
-				for( j=3; j<(NCOLS/sqrt_comm_sz)-3; j++ ){
-					myFinalArray[0][j] = topRow[j-3]*((double)1/16) 		/* leftUpCorn */
-									   + myArray[0][j-3]*((double)2/16)		/* left */
-									   + myArray[0+1][j-3]*((double)1/16)	/* leftDownCorn */
-									   + topRow[j]*((double)2/16)			/* up */
-									   + myArray[0][j]*((double)4/16)		/* itself */
-									   + myArray[0+1][j]*((double)2/16)		/* down */
-									   + topRow[j+3]*((double)1/16)			/* rightUpCorn */
-									   + myArray[0][j+3]*((double)2/16)		/* right */
-									   + myArray[0+1][j+3]*((double)1/16);	/* rightDownCorn*/
+				else if( myItems.topRow.recieved == 2 ){
+					// i=0
+					for( j=1; j<(NCOLS/sqrt_comm_sz)-1; j++ ){
+						myFinalArray[0][j] = myArray[0][j]*((double)1/16) 		/* leftUpCorn */	/* <<< WE USE ITSELF */
+										   + myArray[0][j-1]*((double)2/16)		/* left */
+										   + myArray[0+1][j-1]*((double)1/16)	/* leftDownCorn */
+										   + myArray[0][j]*((double)2/16)		/* up */		/* <<< WE USE ITSELF */
+										   + myArray[0][j]*((double)4/16)		/* itself */
+										   + myArray[0+1][j]*((double)2/16)		/* down */
+										   + myArray[0][j]*((double)1/16)		/* rightUpCorn */ /* <<< WE USE ITSELF */
+										   + myArray[0][j+1]*((double)2/16)		/* right */
+										   + myArray[0+1][j+1]*((double)1/16);	/* rightDownCorn*/
+					}
+					myItems.topRow.recieved = 3; /* It's ok we applied filter to it. */
+					counterItems ++;
 				}
-			}
 
-			/* Apply filter on the inner bottomRow */
-			if( myRecievedItems.bottomRow == 2 ){
-				int s = (NROWS/sqrt_comm_sz)-1;
-				for( j=3; j<(NCOLS/sqrt_comm_sz)-3; j++ ){
-					myFinalArray[s][j] = myArray[s-1][j-3]*((double)1/16) 	/* leftUpCorn */
-									   + myArray[s][j-3]*((double)2/16)		/* left */
-									   + myArray[s][j]*((double)1/16)		/* leftDownCorn */	/* <<< WE USE ITSELF */
-									   + myArray[s-1][j]*((double)2/16)		/* up */
-									   + myArray[s][j]*((double)4/16)		/* itself */
-									   + myArray[s][j]*((double)2/16)		/* down */			/* <<< WE USE ITSELF */
-									   + myArray[s-1][j+3]*((double)1/16)	/* rightUpCorn */
-									   + myArray[s][j+3]*((double)2/16)		/* right */
-									   + myArray[s][j]*((double)1/16);		/* rightDownCorn*/	/* <<< WE USE ITSELF */
+				/* Apply filter on the inner bottomRow */
+				if( myItems.bottomRow.recieved == 0 ){
+
+					MPI_Test(&myItems.bottomRow.request,&flag,&status);
+					if( flag ){
+						int s = (NROWS/sqrt_comm_sz)-1;
+						for( j=1; j<(NCOLS/sqrt_comm_sz)-1; j++ ){
+							myFinalArray[s][j] = myArray[s-1][j-1]*((double)1/16) 	/* leftUpCorn */
+											   + myArray[s][j-1]*((double)2/16)		/* left */
+											   + bottomRow[j-1]*((double)1/16)		/* leftDownCorn */
+											   + myArray[s-1][j]*((double)2/16)		/* up */
+											   + myArray[s][j]*((double)4/16)		/* itself */
+											   + bottomRow[j]*((double)2/16)		/* down */
+											   + myArray[s-1][j+1]*((double)1/16)	/* rightUpCorn */
+											   + myArray[s][j+1]*((double)2/16)		/* right */
+											   + bottomRow[j+1]*((double)1/16);		/* rightDownCorn*/
+						}
+						myItems.bottomRow.recieved = 1;
+						counterItems ++;
+						flag = 0 ;
+					}
+
 				}
-			}
-			else if( myRecievedItems.bottomRow == 1 ){
-				int s = (NROWS/sqrt_comm_sz)-1;
-				for( j=3; j<(NCOLS/sqrt_comm_sz)-3; j++ ){
-					myFinalArray[s][j] = myArray[s-1][j-3]*((double)1/16) 	/* leftUpCorn */
-									   + myArray[s][j-3]*((double)2/16)		/* left */
-									   + bottomRow[j-3]*((double)1/16)		/* leftDownCorn */
-									   + myArray[s-1][j]*((double)2/16)		/* up */
-									   + myArray[s][j]*((double)4/16)		/* itself */
-									   + bottomRow[j]*((double)2/16)		/* down */
-									   + myArray[s-1][j+3]*((double)1/16)	/* rightUpCorn */
-									   + myArray[s][j+3]*((double)2/16)		/* right */
-									   + bottomRow[j+3]*((double)1/16);		/* rightDownCorn*/
+				else if( myItems.bottomRow.recieved == 2 ){
+					int s = (NROWS/sqrt_comm_sz)-1;
+					for( j=1; j<(NCOLS/sqrt_comm_sz)-1; j++ ){
+						myFinalArray[s][j] = myArray[s-1][j-1]*((double)1/16) 	/* leftUpCorn */
+										   + myArray[s][j-1]*((double)2/16)		/* left */
+										   + myArray[s][j]*((double)1/16)		/* leftDownCorn */	/* <<< WE USE ITSELF */
+										   + myArray[s-1][j]*((double)2/16)		/* up */
+										   + myArray[s][j]*((double)4/16)		/* itself */
+										   + myArray[s][j]*((double)2/16)		/* down */			/* <<< WE USE ITSELF */
+										   + myArray[s-1][j+1]*((double)1/16)	/* rightUpCorn */
+										   + myArray[s][j+1]*((double)2/16)		/* right */
+										   + myArray[s][j]*((double)1/16);		/* rightDownCorn*/	/* <<< WE USE ITSELF */
+					}
+					myItems.bottomRow.recieved = 3; /* It's ok we applied filter to it. */
+					counterItems ++;
 				}
-			}
 
-			/* Apply filter on the inner leftCol */
-			if( myRecievedItems.leftCol == 2 ){
-				//j=0
-				for( j=1; j<(NROWS/sqrt_comm_sz)-1; j++ ){
-					myFinalArray[j][0] = myArray[j][0]*((double)1/16) 		/* leftUpCorn */	/* <<< WE USE ITSELF */
-									   + myArray[j][0]*((double)2/16)		/* left */			/* <<< WE USE ITSELF */
-									   + myArray[j][0]*((double)1/16)		/* leftDownCorn */	/* <<< WE USE ITSELF */
-									   + myArray[j-1][0]*((double)2/16)		/* up */
-									   + myArray[j][0]*((double)4/16)		/* itself */
-									   + myArray[j+1][0]*((double)2/16)		/* down */
-									   + myArray[j-1][0+3]*((double)1/16)	/* rightUpCorn */
-									   + myArray[j][0+3]*((double)2/16)		/* right */
-									   + myArray[j+1][0+3]*((double)1/16);	/* rightDownCorn*/
+				/* Apply filter on the inner leftCol */
+				if( myItems.leftCol.recieved == 0 ){
 
-				   myFinalArray[j][0] = myArray[j][0]*((double)1/16) 		/* leftUpCorn */	/* <<< WE USE ITSELF */
-		   							   + myArray[j][0]*((double)2/16)		/* left */			/* <<< WE USE ITSELF */
-		   							   + myArray[j][0]*((double)1/16)		/* leftDownCorn */	/* <<< WE USE ITSELF */
-		   							   + myArray[j-1][0]*((double)2/16)		/* up */
-		   							   + myArray[j][0]*((double)4/16)		/* itself */
-		   							   + myArray[j+1][0]*((double)2/16)		/* down */
-		   							   + myArray[j-1][0+3]*((double)1/16)	/* rightUpCorn */
-		   							   + myArray[j][0+3]*((double)2/16)		/* right */
-		   							   + myArray[j+1][0+3]*((double)1/16);	/* rightDownCorn*/
+					MPI_Test(&myItems.leftCol.request,&flag,&status);
+					if( flag ){
+						//j=0
+						for( j=1; j<(NROWS/sqrt_comm_sz)-1; j++ ){
+							myFinalArray[j][0] = leftCol[j-1]*((double)1/16) 		/* leftUpCorn */
+											   + leftCol[j]*((double)2/16)			/* left */
+											   + leftCol[j+1]*((double)1/16)		/* leftDownCorn */
+											   + myArray[j-1][0]*((double)2/16)		/* up */
+											   + myArray[j][0]*((double)4/16)		/* itself */
+											   + myArray[j+1][0]*((double)2/16)		/* down */
+											   + myArray[j-1][0+1]*((double)1/16)	/* rightUpCorn */
+											   + myArray[j][0+1]*((double)2/16)		/* right */
+											   + myArray[j+1][0+1]*((double)1/16);	/* rightDownCorn*/
+						}
+						myItems.leftCol.recieved = 1;
+						counterItems ++;
+						flag = 0 ;
+					}
 
-				   myFinalArray[j][0] = myArray[j][0]*((double)1/16) 		/* leftUpCorn */	/* <<< WE USE ITSELF */
-									   + myArray[j][0]*((double)2/16)		/* left */			/* <<< WE USE ITSELF */
-									   + myArray[j][0]*((double)1/16)		/* leftDownCorn */	/* <<< WE USE ITSELF */
-									   + myArray[j-1][0]*((double)2/16)		/* up */
-									   + myArray[j][0]*((double)4/16)		/* itself */
-									   + myArray[j+1][0]*((double)2/16)		/* down */
-									   + myArray[j-1][0+3]*((double)1/16)	/* rightUpCorn */
-									   + myArray[j][0+3]*((double)2/16)		/* right */
-									   + myArray[j+1][0+3]*((double)1/16);	/* rightDownCorn*/
 				}
-			}
-			else if( myRecievedItems.leftCol == 1 ){
-				//j=0
-				for( j=1; j<(NROWS/sqrt_comm_sz)-1; j++ ){
-					myFinalArray[j][0] = leftCol[j-1]*((double)1/16) 		/* leftUpCorn */
-									   + leftCol[j]*((double)2/16)			/* left */
-									   + leftCol[j+1]*((double)1/16)		/* leftDownCorn */
-									   + myArray[j-1][0]*((double)2/16)		/* up */
-									   + myArray[j][0]*((double)4/16)		/* itself */
-									   + myArray[j+1][0]*((double)2/16)		/* down */
-									   + myArray[j-1][0+3]*((double)1/16)	/* rightUpCorn */
-									   + myArray[j][0+3]*((double)2/16)		/* right */
-									   + myArray[j+1][0+3]*((double)1/16);	/* rightDownCorn*/
-
-					myFinalArray[j][0] = leftCol[j-1]*((double)1/16) 		/* leftUpCorn */
-									   + leftCol[j]*((double)2/16)			/* left */
-									   + leftCol[j+1]*((double)1/16)		/* leftDownCorn */
-									   + myArray[j-1][0]*((double)2/16)		/* up */
-									   + myArray[j][0]*((double)4/16)		/* itself */
-									   + myArray[j+1][0]*((double)2/16)		/* down */
-									   + myArray[j-1][0+3]*((double)1/16)	/* rightUpCorn */
-									   + myArray[j][0+3]*((double)2/16)		/* right */
-									   + myArray[j+1][0+3]*((double)1/16);	/* rightDownCorn*/
-
-	   				myFinalArray[j][0] = leftCol[j-1]*((double)1/16) 		/* leftUpCorn */
-	   								   + leftCol[j]*((double)2/16)			/* left */
-	   								   + leftCol[j+1]*((double)1/16)		/* leftDownCorn */
-	   								   + myArray[j-1][0]*((double)2/16)		/* up */
-	   								   + myArray[j][0]*((double)4/16)		/* itself */
-	   								   + myArray[j+1][0]*((double)2/16)		/* down */
-	   								   + myArray[j-1][0+3]*((double)1/16)	/* rightUpCorn */
-	   								   + myArray[j][0+3]*((double)2/16)		/* right */
-	   								   + myArray[j+1][0+3]*((double)1/16);	/* rightDownCorn*/
+				else if( myItems.leftCol.recieved == 2 ){
+					//j=0
+					for( j=1; j<(NROWS/sqrt_comm_sz)-1; j++ ){
+						myFinalArray[j][0] = myArray[j][0]*((double)1/16) 		/* leftUpCorn */	/* <<< WE USE ITSELF */
+										   + myArray[j][0]*((double)2/16)		/* left */			/* <<< WE USE ITSELF */
+										   + myArray[j][0]*((double)1/16)		/* leftDownCorn */	/* <<< WE USE ITSELF */
+										   + myArray[j-1][0]*((double)2/16)		/* up */
+										   + myArray[j][0]*((double)4/16)		/* itself */
+										   + myArray[j+1][0]*((double)2/16)		/* down */
+										   + myArray[j-1][0+1]*((double)1/16)	/* rightUpCorn */
+										   + myArray[j][0+1]*((double)2/16)		/* right */
+										   + myArray[j+1][0+1]*((double)1/16);	/* rightDownCorn*/
+					}
+					myItems.leftCol.recieved = 3; /* It's ok we applied filter to it. */
+					counterItems ++;
 				}
-			}
 
-			/* Apply filter on the inner rightCol */
-			if( myRecievedItems.rightCol == 2 ){
-				int s = (NCOLS/sqrt_comm_sz)-1;
-				for( j=1; j<(NROWS/sqrt_comm_sz)-1; j++ ){
-					myFinalArray[j][s] = myArray[j-1][s-3]*((double)1/16) 	/* leftUpCorn */
-									   + myArray[j][s-3]*((double)2/16)		/* left */
-									   + myArray[j+1][s-3]*((double)1/16)	/* leftDownCorn */
-									   + myArray[j-1][s]*((double)2/16)		/* up */
-									   + myArray[j][s]*((double)4/16)		/* itself */
-									   + myArray[j+1][s]*((double)2/16)		/* down */
-									   + myArray[j][s]*((double)1/16)		/* rightUpCorn */	/* <<< WE USE ITSELF */
-									   + myArray[j][s]*((double)2/16)		/* right */			/* <<< WE USE ITSELF */
-									   + myArray[j][s]*((double)1/16);		/* rightDownCorn*/	/* <<< WE USE ITSELF */
+				/* Apply filter on the inner rightCol */
+				if( myItems.rightCol.recieved == 0 ){
 
-					myFinalArray[j][s] = myArray[j-1][s-3]*((double)1/16) 	/* leftUpCorn */
-									   + myArray[j][s-3]*((double)2/16)		/* left */
-									   + myArray[j+1][s-3]*((double)1/16)	/* leftDownCorn */
-									   + myArray[j-1][s]*((double)2/16)		/* up */
-									   + myArray[j][s]*((double)4/16)		/* itself */
-									   + myArray[j+1][s]*((double)2/16)		/* down */
-									   + myArray[j][s]*((double)1/16)		/* rightUpCorn */	/* <<< WE USE ITSELF */
-									   + myArray[j][s]*((double)2/16)		/* right */			/* <<< WE USE ITSELF */
-									   + myArray[j][s]*((double)1/16);		/* rightDownCorn*/	/* <<< WE USE ITSELF */
+					MPI_Test(&myItems.rightCol.request,&flag,&status);
+					if( flag ){
+						int s = (NCOLS/sqrt_comm_sz)-1;
+						for( j=1; j<(NROWS/sqrt_comm_sz)-1; j++ ){
+							myFinalArray[j][s] = myArray[j-1][s-1]*((double)1/16) 	/* leftUpCorn */
+											   + myArray[j][s-1]*((double)2/16)		/* left */
+											   + myArray[j+1][s-1]*((double)1/16)	/* leftDownCorn */
+											   + myArray[j-1][s]*((double)2/16)		/* up */
+											   + myArray[j][s]*((double)4/16)		/* itself */
+											   + myArray[j+1][s]*((double)2/16)		/* down */
+											   + rightCol[j-1]*((double)1/16)		/* rightUpCorn */
+											   + rightCol[j]*((double)2/16)			/* right */
+											   + rightCol[j+1]*((double)1/16);		/* rightDownCorn*/
+						}
+						myItems.rightCol.recieved = 1;
+						counterItems ++;
+						flag = 0 ;
+					}
 
-					myFinalArray[j][s] = myArray[j-1][s-3]*((double)1/16) 	/* leftUpCorn */
-									   + myArray[j][s-3]*((double)2/16)		/* left */
-									   + myArray[j+1][s-3]*((double)1/16)	/* leftDownCorn */
-									   + myArray[j-1][s]*((double)2/16)		/* up */
-									   + myArray[j][s]*((double)4/16)		/* itself */
-									   + myArray[j+1][s]*((double)2/16)		/* down */
-									   + myArray[j][s]*((double)1/16)		/* rightUpCorn */	/* <<< WE USE ITSELF */
-									   + myArray[j][s]*((double)2/16)		/* right */			/* <<< WE USE ITSELF */
-									   + myArray[j][s]*((double)1/16);		/* rightDownCorn*/	/* <<< WE USE ITSELF */
 				}
-			}
-			else if( myRecievedItems.rightCol == 1 ){
-				int s = (NCOLS/sqrt_comm_sz)-1;
-				for( j=1; j<(NROWS/sqrt_comm_sz)-1; j++ ){
-					myFinalArray[j][s] = myArray[j-1][s-3]*((double)1/16) 	/* leftUpCorn */
-									   + myArray[j][s-3]*((double)2/16)		/* left */
-									   + myArray[j+1][s-3]*((double)1/16)	/* leftDownCorn */
-									   + myArray[j-1][s]*((double)2/16)		/* up */
-									   + myArray[j][s]*((double)4/16)		/* itself */
-									   + myArray[j+1][s]*((double)2/16)		/* down */
-									   + rightCol[j-1]*((double)1/16)		/* rightUpCorn */
-									   + rightCol[j]*((double)2/16)			/* right */
-									   + rightCol[j+1]*((double)1/16);		/* rightDownCorn*/
-
-				   	myFinalArray[j][s] = myArray[j-1][s-3]*((double)1/16) 	/* leftUpCorn */
-				   					   + myArray[j][s-3]*((double)2/16)		/* left */
-				   					   + myArray[j+1][s-3]*((double)1/16)	/* leftDownCorn */
-				   					   + myArray[j-1][s]*((double)2/16)		/* up */
-				   					   + myArray[j][s]*((double)4/16)		/* itself */
-				   					   + myArray[j+1][s]*((double)2/16)		/* down */
-				   					   + rightCol[j-1]*((double)1/16)		/* rightUpCorn */
-				   					   + rightCol[j]*((double)2/16)			/* right */
-				   					   + rightCol[j+1]*((double)1/16);		/* rightDownCorn*/
-
-				   	myFinalArray[j][s] = myArray[j-1][s-3]*((double)1/16) 	/* leftUpCorn */
-				   					   + myArray[j][s-3]*((double)2/16)		/* left */
-				   					   + myArray[j+1][s-3]*((double)1/16)	/* leftDownCorn */
-				   					   + myArray[j-1][s]*((double)2/16)		/* up */
-				   					   + myArray[j][s]*((double)4/16)		/* itself */
-				   					   + myArray[j+1][s]*((double)2/16)		/* down */
-				   					   + rightCol[j-1]*((double)1/16)		/* rightUpCorn */
-				   					   + rightCol[j]*((double)2/16)			/* right */
-				   					   + rightCol[j+1]*((double)1/16);		/* rightDownCorn*/
+				else if( myItems.rightCol.recieved == 2 ){
+					int s = (NCOLS/sqrt_comm_sz)-1;
+					for( j=1; j<(NROWS/sqrt_comm_sz)-1; j++ ){
+						myFinalArray[j][s] = myArray[j-1][s-1]*((double)1/16) 	/* leftUpCorn */
+										   + myArray[j][s-1]*((double)2/16)		/* left */
+										   + myArray[j+1][s-1]*((double)1/16)	/* leftDownCorn */
+										   + myArray[j-1][s]*((double)2/16)		/* up */
+										   + myArray[j][s]*((double)4/16)		/* itself */
+										   + myArray[j+1][s]*((double)2/16)		/* down */
+										   + myArray[j][s]*((double)1/16)		/* rightUpCorn */	/* <<< WE USE ITSELF */
+										   + myArray[j][s]*((double)2/16)		/* right */			/* <<< WE USE ITSELF */
+										   + myArray[j][s]*((double)1/16);		/* rightDownCorn*/	/* <<< WE USE ITSELF */
+					}
+					myItems.rightCol.recieved = 3; /* It's ok we applied filter to it. */
+					counterItems ++;
 				}
-			}
 
-			/* Apply filter on the leftUpCorn */
-			if( (myRecievedItems.topRow == 2) && (myRecievedItems.leftCol == 2) && (myRecievedItems.leftUpCorn == 2) ){
-				//i=0 and j=0
-				myFinalArray[0][0] = myArray[0][0]*((double)1/16) 		/* leftUpCorn */	/* <<< WE USE ITSELF */
-								   + myArray[0][0]*((double)2/16)		/* left */			/* <<< WE USE ITSELF */
-								   + myArray[0][0]*((double)1/16)		/* leftDownCorn */	/* <<< WE USE ITSELF */
-								   + myArray[0][0]*((double)2/16)		/* up */			/* <<< WE USE ITSELF */
-								   + myArray[0][0]*((double)4/16)		/* itself */
-								   + myArray[0+1][0]*((double)2/16)		/* down */
-								   + myArray[0][0]*((double)1/16)		/* rightUpCorn */	/* <<< WE USE ITSELF */
-								   + myArray[0][0+1]*((double)2/16)		/* right */
-								   + myArray[0+1][0+1]*((double)1/16);	/* rightDownCorn*/
-			}
-			else if( (myRecievedItems.topRow == 2) && (myRecievedItems.leftCol == 1) && (myRecievedItems.leftUpCorn == 2) ){
-				//i=0 and j=0
-				myFinalArray[0][0] = myArray[0][0]*((double)1/16) 		/* leftUpCorn */	/* <<< WE USE ITSELF */
-								   + leftCol[0]*((double)2/16)			/* left */
-								   + leftCol[1]*((double)1/16)			/* leftDownCorn */
-								   + myArray[0][0]*((double)2/16)		/* up */			/* <<< WE USE ITSELF */
-								   + myArray[0][0]*((double)4/16)		/* itself */
-								   + myArray[0+1][0]*((double)2/16)		/* down */
-								   + myArray[0][0]*((double)1/16)		/* rightUpCorn */	/* <<< WE USE ITSELF */
-								   + myArray[0][0+1]*((double)2/16)		/* right */
-								   + myArray[0+1][0+1]*((double)1/16);	/* rightDownCorn*/
-			}
-			else if( (myRecievedItems.topRow == 1) && (myRecievedItems.leftCol == 2) && (myRecievedItems.leftUpCorn == 2) ){
-				//i=0 and j=0
-				myFinalArray[0][0] = myArray[0][0]*((double)1/16) 		/* leftUpCorn */	/* <<< WE USE ITSELF */
-								   + myArray[0][0]*((double)2/16)		/* left */			/* <<< WE USE ITSELF */
-								   + myArray[0][0]*((double)1/16)		/* leftDownCorn */	/* <<< WE USE ITSELF */
-								   + topRow[0]*((double)2/16)			/* up */
-								   + myArray[0][0]*((double)4/16)		/* itself */
-								   + myArray[0+1][0]*((double)2/16)		/* down */
-								   + topRow[1]*((double)1/16)			/* rightUpCorn */
-								   + myArray[0][0+1]*((double)2/16)		/* right */
-								   + myArray[0+1][0+1]*((double)1/16);	/* rightDownCorn*/
-			}
-			else if( (myRecievedItems.topRow == 1) && (myRecievedItems.leftCol == 1) && (myRecievedItems.leftUpCorn == 1) ){
-				//i=0 and j=0
-				myFinalArray[0][0] = leftUpCorn*((double)1/16) 			/* leftUpCorn */
-								   + leftCol[0]*((double)2/16)			/* left */
-								   + leftCol[1]*((double)1/16)			/* leftDownCorn */
-								   + topRow[0]*((double)2/16)			/* up */
-								   + myArray[0][0]*((double)4/16)		/* itself */
-								   + myArray[0+1][0]*((double)2/16)		/* down */
-								   + topRow[1]*((double)1/16)			/* rightUpCorn */
-								   + myArray[0][0+1]*((double)2/16)		/* right */
-								   + myArray[0+1][0+1]*((double)1/16);	/* rightDownCorn*/
-			}
+				/* Apply filter on the leftUpCorn */
+				if( (myItems.topRow.recieved == 3) && (myItems.leftCol.recieved == 3) && (myItems.leftUpCorn.recieved == 2) ){
+					//i=0 and j=0
+					myFinalArray[0][0] = myArray[0][0]*((double)1/16) 		/* leftUpCorn */	/* <<< WE USE ITSELF */
+									   + myArray[0][0]*((double)2/16)		/* left */			/* <<< WE USE ITSELF */
+									   + myArray[0][0]*((double)1/16)		/* leftDownCorn */	/* <<< WE USE ITSELF */
+									   + myArray[0][0]*((double)2/16)		/* up */			/* <<< WE USE ITSELF */
+									   + myArray[0][0]*((double)4/16)		/* itself */
+									   + myArray[0+1][0]*((double)2/16)		/* down */
+									   + myArray[0][0]*((double)1/16)		/* rightUpCorn */	/* <<< WE USE ITSELF */
+									   + myArray[0][0+1]*((double)2/16)		/* right */
+									   + myArray[0+1][0+1]*((double)1/16);	/* rightDownCorn*/
 
-			/* Apply filter on the rightUpCorn */
-			if( (myRecievedItems.topRow == 2) && (myRecievedItems.rightCol == 2) && (myRecievedItems.rightUpCorn == 2) ){
-				//i=0
-				int r = NCOLS/sqrt_comm_sz - 1 ;
+					myItems.leftUpCorn.recieved = 3; /* It's ok we applied filter to it. */
+					counterItems ++;
+				}
+				else if( (myItems.topRow.recieved == 3) && (myItems.leftCol.recieved == 1) && (myItems.leftUpCorn.recieved == 2) ){
+					//i=0 and j=0
+					myFinalArray[0][0] = myArray[0][0]*((double)1/16) 		/* leftUpCorn */	/* <<< WE USE ITSELF */
+									   + leftCol[0]*((double)2/16)			/* left */
+									   + leftCol[1]*((double)1/16)			/* leftDownCorn */
+									   + myArray[0][0]*((double)2/16)		/* up */			/* <<< WE USE ITSELF */
+									   + myArray[0][0]*((double)4/16)		/* itself */
+									   + myArray[0+1][0]*((double)2/16)		/* down */
+									   + myArray[0][0]*((double)1/16)		/* rightUpCorn */	/* <<< WE USE ITSELF */
+									   + myArray[0][0+1]*((double)2/16)		/* right */
+									   + myArray[0+1][0+1]*((double)1/16);	/* rightDownCorn*/
 
-				myFinalArray[0][r] = myArray[0][r]*((double)1/16) 		/* leftUpCorn */	/* <<< WE USE ITSELF */
-								   + myArray[0][r-1]*((double)2/16)		/* left */
-								   + myArray[0+1][r-1]*((double)1/16)	/* leftDownCorn */
-								   + myArray[0][r]*((double)2/16)		/* up */			/* <<< WE USE ITSELF */
-								   + myArray[0][r]*((double)4/16)		/* itself */
-								   + myArray[0+1][r]*((double)2/16)		/* down */
-								   + myArray[0][r]*((double)1/16)		/* rightUpCorn */	/* <<< WE USE ITSELF */
-								   + myArray[0][r]*((double)2/16)		/* right */			/* <<< WE USE ITSELF */
-								   + myArray[0][r]*((double)1/16);		/* rightDownCorn*/	/* <<< WE USE ITSELF */
-			}
-			else if( (myRecievedItems.topRow == 2) && (myRecievedItems.rightCol == 1) && (myRecievedItems.rightUpCorn == 2) ){
-				//i=0
-				int r = NCOLS/sqrt_comm_sz - 1 ;
+					myItems.leftUpCorn.recieved = 3; /* It's ok we applied filter to it. */
+					counterItems ++;
+				}
+				else if( (myItems.topRow.recieved == 1) && (myItems.leftCol.recieved == 3) && (myItems.leftUpCorn.recieved == 2) ){
+					//i=0 and j=0
+					myFinalArray[0][0] = myArray[0][0]*((double)1/16) 		/* leftUpCorn */	/* <<< WE USE ITSELF */
+									   + myArray[0][0]*((double)2/16)		/* left */			/* <<< WE USE ITSELF */
+									   + myArray[0][0]*((double)1/16)		/* leftDownCorn */	/* <<< WE USE ITSELF */
+									   + topRow[0]*((double)2/16)			/* up */
+									   + myArray[0][0]*((double)4/16)		/* itself */
+									   + myArray[0+1][0]*((double)2/16)		/* down */
+									   + topRow[1]*((double)1/16)			/* rightUpCorn */
+									   + myArray[0][0+1]*((double)2/16)		/* right */
+									   + myArray[0+1][0+1]*((double)1/16);	/* rightDownCorn*/
 
-				myFinalArray[0][r] = myArray[0][r]*((double)1/16) 		/* leftUpCorn */	/* <<< WE USE ITSELF */
-								   + myArray[0][r-1]*((double)2/16)		/* left */
-								   + myArray[0+1][r-1]*((double)1/16)	/* leftDownCorn */
-								   + myArray[0][r]*((double)2/16)		/* up */			/* <<< WE USE ITSELF */
-								   + myArray[0][r]*((double)4/16)		/* itself */
-								   + myArray[0+1][r]*((double)2/16)		/* down */
-								   + myArray[0][r]*((double)1/16)		/* rightUpCorn */	/* <<< WE USE ITSELF */
-								   + rightCol[0]*((double)2/16)			/* right */
-								   + rightCol[1]*((double)1/16);		/* rightDownCorn*/
+					myItems.leftUpCorn.recieved = 3; /* It's ok we applied filter to it. */
+					counterItems ++;
+				}
+				else if( (myItems.topRow.recieved == 1) && (myItems.leftCol.recieved == 1) && (myItems.leftUpCorn.recieved == 0) ){
 
-			}
-			else if( (myRecievedItems.topRow == 1) && (myRecievedItems.rightCol == 2) && (myRecievedItems.rightUpCorn == 2) ){
-				//i=0
-				int r = NCOLS/sqrt_comm_sz - 1 ;
+					MPI_Test(&myItems.leftUpCorn.request,&flag,&status);
+					if( flag ){
+						//i=0 and j=0
+						myFinalArray[0][0] = leftUpCorn*((double)1/16) 			/* leftUpCorn */
+										   + leftCol[0]*((double)2/16)			/* left */
+										   + leftCol[1]*((double)1/16)			/* leftDownCorn */
+										   + topRow[0]*((double)2/16)			/* up */
+										   + myArray[0][0]*((double)4/16)		/* itself */
+										   + myArray[0+1][0]*((double)2/16)		/* down */
+										   + topRow[1]*((double)1/16)			/* rightUpCorn */
+										   + myArray[0][0+1]*((double)2/16)		/* right */
+										   + myArray[0+1][0+1]*((double)1/16);	/* rightDownCorn*/
 
-				myFinalArray[0][r] = topRow[r-1]*((double)1/16) 		/* leftUpCorn */
-								   + myArray[0][r-1]*((double)2/16)		/* left */
-								   + myArray[0+1][r-1]*((double)1/16)	/* leftDownCorn */
-								   + topRow[r]*((double)2/16)			/* up */
-								   + myArray[0][r]*((double)4/16)		/* itself */
-								   + myArray[0+1][r]*((double)2/16)		/* down */
-								   + myArray[0][r]*((double)1/16)		/* rightUpCorn */	/* <<< WE USE ITSELF */
-								   + myArray[0][r]*((double)2/16)		/* right */			/* <<< WE USE ITSELF */
-								   + myArray[0][r]*((double)1/16);		/* rightDownCorn*/	/* <<< WE USE ITSELF */
+						myItems.leftUpCorn.recieved = 1;
+						counterItems ++;
+						flag = 0 ;
+					}
 
-			}
-			else if( (myRecievedItems.topRow == 1) && (myRecievedItems.rightCol == 1) && (myRecievedItems.rightUpCorn == 1) ){
-				//i=0
-				int r = NCOLS/sqrt_comm_sz - 1 ;
+				}
 
-				myFinalArray[0][r] = topRow[r-1]*((double)1/16) 		/* leftUpCorn */
-								   + myArray[0][r-1]*((double)2/16)		/* left */
-								   + myArray[0+1][r-1]*((double)1/16)	/* leftDownCorn */
-								   + topRow[r]*((double)2/16)			/* up */
-								   + myArray[0][r]*((double)4/16)		/* itself */
-								   + myArray[0+1][r]*((double)2/16)		/* down */
-								   + rightUpCorn*((double)1/16)			/* rightUpCorn */
-								   + rightCol[0]*((double)2/16)			/* right */
-								   + rightCol[1]*((double)1/16);		/* rightDownCorn*/
+				/* Apply filter on the rightUpCorn */
+				if( (myItems.topRow.recieved == 3) && (myItems.rightCol.recieved == 3) && (myItems.rightUpCorn.recieved == 2) ){
+					//i=0
+					int r = NCOLS/sqrt_comm_sz - 1 ;
 
-			}
+					myFinalArray[0][r] = myArray[0][r]*((double)1/16) 		/* leftUpCorn */	/* <<< WE USE ITSELF */
+									   + myArray[0][r-1]*((double)2/16)		/* left */
+									   + myArray[0+1][r-1]*((double)1/16)	/* leftDownCorn */
+									   + myArray[0][r]*((double)2/16)		/* up */			/* <<< WE USE ITSELF */
+									   + myArray[0][r]*((double)4/16)		/* itself */
+									   + myArray[0+1][r]*((double)2/16)		/* down */
+									   + myArray[0][r]*((double)1/16)		/* rightUpCorn */	/* <<< WE USE ITSELF */
+									   + myArray[0][r]*((double)2/16)		/* right */			/* <<< WE USE ITSELF */
+									   + myArray[0][r]*((double)1/16);		/* rightDownCorn*/	/* <<< WE USE ITSELF */
 
-			/* Apply filter on the leftDownCorn */
-			if( (myRecievedItems.bottomRow == 2) && (myRecievedItems.leftCol == 2) && (myRecievedItems.leftDownCorn == 2) ){
-				//j=0
-				int r = NROWS/sqrt_comm_sz - 1 ;
+					myItems.rightUpCorn.recieved = 3; /* It's ok we applied filter to it. */
+					counterItems ++;
+				}
+				else if( (myItems.topRow.recieved == 3) && (myItems.rightCol.recieved == 1) && (myItems.rightUpCorn.recieved == 2) ){
+					//i=0
+					int r = NCOLS/sqrt_comm_sz - 1 ;
 
-				myFinalArray[r][0] = myArray[r][0]*((double)1/16) 		/* leftUpCorn */	/* <<< WE USE ITSELF */
-								   + myArray[r][0]*((double)2/16)		/* left */			/* <<< WE USE ITSELF */
-								   + myArray[r][0]*((double)1/16)		/* leftDownCorn */	/* <<< WE USE ITSELF */
-								   + myArray[r-1][0]*((double)2/16)		/* up */
-								   + myArray[r][0]*((double)4/16)		/* itself */
-								   + myArray[r][0]*((double)2/16)		/* down */			/* <<< WE USE ITSELF */
-								   + myArray[r-1][0+1]*((double)1/16)	/* rightUpCorn */
-								   + myArray[r][0+1]*((double)2/16)		/* right */
-								   + myArray[r][0]*((double)1/16);		/* rightDownCorn*/	/* <<< WE USE ITSELF */
+					myFinalArray[0][r] = myArray[0][r]*((double)1/16) 		/* leftUpCorn */	/* <<< WE USE ITSELF */
+									   + myArray[0][r-1]*((double)2/16)		/* left */
+									   + myArray[0+1][r-1]*((double)1/16)	/* leftDownCorn */
+									   + myArray[0][r]*((double)2/16)		/* up */			/* <<< WE USE ITSELF */
+									   + myArray[0][r]*((double)4/16)		/* itself */
+									   + myArray[0+1][r]*((double)2/16)		/* down */
+									   + myArray[0][r]*((double)1/16)		/* rightUpCorn */	/* <<< WE USE ITSELF */
+									   + rightCol[0]*((double)2/16)			/* right */
+									   + rightCol[1]*((double)1/16);		/* rightDownCorn*/
 
-			}
-			else if( (myRecievedItems.bottomRow == 2) && (myRecievedItems.leftCol == 1) && (myRecievedItems.leftDownCorn == 2) ){
-				//j=0
-				int r = NROWS/sqrt_comm_sz - 1 ;
+					myItems.rightUpCorn.recieved = 3; /* It's ok we applied filter to it. */
+					counterItems ++;
+				}
+				else if( (myItems.topRow.recieved == 1) && (myItems.rightCol.recieved == 3) && (myItems.rightUpCorn.recieved == 2) ){
+					//i=0
+					int r = NCOLS/sqrt_comm_sz - 1 ;
 
-				myFinalArray[r][0] = leftCol[r-1]*((double)1/16) 		/* leftUpCorn */
-								   + leftCol[r]*((double)2/16)			/* left */
-								   + myArray[r][0]*((double)1/16)		/* leftDownCorn */	/* <<< WE USE ITSELF */
-								   + myArray[r-1][0]*((double)2/16)		/* up */
-								   + myArray[r][0]*((double)4/16)		/* itself */
-								   + myArray[r][0]*((double)2/16)		/* down */			/* <<< WE USE ITSELF */
-								   + myArray[r-1][0+1]*((double)1/16)	/* rightUpCorn */
-								   + myArray[r][0+1]*((double)2/16)		/* right */
-								   + myArray[r][0]*((double)1/16);		/* rightDownCorn*/	/* <<< WE USE ITSELF */
+					myFinalArray[0][r] = topRow[r-1]*((double)1/16) 		/* leftUpCorn */
+									   + myArray[0][r-1]*((double)2/16)		/* left */
+									   + myArray[0+1][r-1]*((double)1/16)	/* leftDownCorn */
+									   + topRow[r]*((double)2/16)			/* up */
+									   + myArray[0][r]*((double)4/16)		/* itself */
+									   + myArray[0+1][r]*((double)2/16)		/* down */
+									   + myArray[0][r]*((double)1/16)		/* rightUpCorn */	/* <<< WE USE ITSELF */
+									   + myArray[0][r]*((double)2/16)		/* right */			/* <<< WE USE ITSELF */
+									   + myArray[0][r]*((double)1/16);		/* rightDownCorn*/	/* <<< WE USE ITSELF */
 
-			}
-			else if( (myRecievedItems.bottomRow == 1) && (myRecievedItems.leftCol == 2) && (myRecievedItems.leftDownCorn == 2) ){
-				//j=0
-				int r = NROWS/sqrt_comm_sz - 1 ;
+					myItems.rightUpCorn.recieved = 3; /* It's ok we applied filter to it. */
+					counterItems ++;
+				}
+				else if( (myItems.topRow.recieved == 1) && (myItems.rightCol.recieved == 1) && (myItems.rightUpCorn.recieved == 0) ){
 
-				myFinalArray[r][0] = myArray[r][0]*((double)1/16) 		/* leftUpCorn */	/* <<< WE USE ITSELF */
-								   + myArray[r][0]*((double)2/16)		/* left */			/* <<< WE USE ITSELF */
-								   + myArray[r][0]*((double)1/16)		/* leftDownCorn */	/* <<< WE USE ITSELF */
-								   + myArray[r-1][0]*((double)2/16)		/* up */
-								   + myArray[r][0]*((double)4/16)		/* itself */
-								   + bottomRow[0]*((double)2/16)		/* down */
-								   + myArray[r-1][0+1]*((double)1/16)	/* rightUpCorn */
-								   + myArray[r][0+1]*((double)2/16)		/* right */
-								   + bottomRow[1]*((double)1/16);		/* rightDownCorn*/
+						MPI_Test(&myItems.rightUpCorn.request,&flag,&status);
+						if( flag ){
+							//i=0
+							int r = NCOLS/sqrt_comm_sz - 1 ;
 
-			}
-			else if( (myRecievedItems.bottomRow == 1) && (myRecievedItems.leftCol == 1) && (myRecievedItems.leftDownCorn == 1) ){
-				//j=0
-				int r = NROWS/sqrt_comm_sz - 1 ;
+							myFinalArray[0][r] = topRow[r-1]*((double)1/16) 		/* leftUpCorn */
+											   + myArray[0][r-1]*((double)2/16)		/* left */
+											   + myArray[0+1][r-1]*((double)1/16)	/* leftDownCorn */
+											   + topRow[r]*((double)2/16)			/* up */
+											   + myArray[0][r]*((double)4/16)		/* itself */
+											   + myArray[0+1][r]*((double)2/16)		/* down */
+											   + rightUpCorn*((double)1/16)			/* rightUpCorn */
+											   + rightCol[0]*((double)2/16)			/* right */
+											   + rightCol[1]*((double)1/16);		/* rightDownCorn*/
 
-				myFinalArray[r][0] = leftCol[r-1]*((double)1/16) 		/* leftUpCorn */
-								   + leftCol[r]*((double)2/16)			/* left */
-								   + leftDownCorn*((double)1/16)		/* leftDownCorn */
-								   + myArray[r-1][0]*((double)2/16)		/* up */
-								   + myArray[r][0]*((double)4/16)		/* itself */
-								   + bottomRow[0]*((double)2/16)		/* down */
-								   + myArray[r-1][0+1]*((double)1/16)	/* rightUpCorn */
-								   + myArray[r][0+1]*((double)2/16)		/* right */
-								   + bottomRow[1]*((double)1/16);		/* rightDownCorn*/
+							myItems.rightUpCorn.recieved = 1;
+							counterItems ++;
+							flag = 0 ;
+						}
 
-			}
+				}
 
-			/* Apply filter on the rightDownCorn */
-			if( (myRecievedItems.bottomRow == 2) && (myRecievedItems.rightCol == 2) && (myRecievedItems.rightDownCorn == 2) ){
+				/* Apply filter on the leftDownCorn */
+				if( (myItems.bottomRow.recieved == 3) && (myItems.leftCol.recieved == 3) && (myItems.leftDownCorn.recieved == 2) ){
+					//j=0
+					int r = NROWS/sqrt_comm_sz - 1 ;
 
-				int r = NROWS/sqrt_comm_sz - 1 ;
-				int s = NCOLS/sqrt_comm_sz - 1 ;
+					myFinalArray[r][0] = myArray[r][0]*((double)1/16) 		/* leftUpCorn */	/* <<< WE USE ITSELF */
+									   + myArray[r][0]*((double)2/16)		/* left */			/* <<< WE USE ITSELF */
+									   + myArray[r][0]*((double)1/16)		/* leftDownCorn */	/* <<< WE USE ITSELF */
+									   + myArray[r-1][0]*((double)2/16)		/* up */
+									   + myArray[r][0]*((double)4/16)		/* itself */
+									   + myArray[r][0]*((double)2/16)		/* down */			/* <<< WE USE ITSELF */
+									   + myArray[r-1][0+1]*((double)1/16)	/* rightUpCorn */
+									   + myArray[r][0+1]*((double)2/16)		/* right */
+									   + myArray[r][0]*((double)1/16);		/* rightDownCorn*/	/* <<< WE USE ITSELF */
 
-				myFinalArray[r][s] = myArray[r-1][s-1]*((double)1/16) 	/* leftUpCorn */
-								   + myArray[r][s-1]*((double)2/16)		/* left */
-								   + myArray[r][s]*((double)1/16)		/* leftDownCorn */	/* <<< WE USE ITSELF */
-								   + myArray[r-1][s]*((double)2/16)		/* up */
-								   + myArray[r][s]*((double)4/16)		/* itself */
-								   + myArray[r][s]*((double)2/16)		/* down */			/* <<< WE USE ITSELF */
-								   + myArray[r][s]*((double)1/16)		/* rightUpCorn */	/* <<< WE USE ITSELF */
-								   + myArray[r][s]*((double)2/16)		/* right */			/* <<< WE USE ITSELF */
-								   + myArray[r][s]*((double)1/16);		/* rightDownCorn*/	/* <<< WE USE ITSELF */
+					myItems.leftDownCorn.recieved = 3;	/* It's ok we applied filter to it. */
+					counterItems ++;
+				}
+				else if( (myItems.bottomRow.recieved == 3) && (myItems.leftCol.recieved == 1) && (myItems.leftDownCorn.recieved == 2) ){
+					//j=0
+					int r = NROWS/sqrt_comm_sz - 1 ;
 
-			}
-			else if( (myRecievedItems.bottomRow == 2) && (myRecievedItems.rightCol == 1) && (myRecievedItems.rightDownCorn == 2) ){
+					myFinalArray[r][0] = leftCol[r-1]*((double)1/16) 		/* leftUpCorn */
+									   + leftCol[r]*((double)2/16)			/* left */
+									   + myArray[r][0]*((double)1/16)		/* leftDownCorn */	/* <<< WE USE ITSELF */
+									   + myArray[r-1][0]*((double)2/16)		/* up */
+									   + myArray[r][0]*((double)4/16)		/* itself */
+									   + myArray[r][0]*((double)2/16)		/* down */			/* <<< WE USE ITSELF */
+									   + myArray[r-1][0+1]*((double)1/16)	/* rightUpCorn */
+									   + myArray[r][0+1]*((double)2/16)		/* right */
+									   + myArray[r][0]*((double)1/16);		/* rightDownCorn*/	/* <<< WE USE ITSELF */
 
-				int r = NROWS/sqrt_comm_sz - 1 ;
-				int s = NCOLS/sqrt_comm_sz - 1 ;
+					myItems.leftDownCorn.recieved = 3;	/* It's ok we applied filter to it. */
+					counterItems ++;
+				}
+				else if( (myItems.bottomRow.recieved == 1) && (myItems.leftCol.recieved == 3) && (myItems.leftDownCorn.recieved == 2) ){
+					//j=0
+					int r = NROWS/sqrt_comm_sz - 1 ;
 
-				myFinalArray[r][s] = myArray[r-1][s-1]*((double)1/16) 	/* leftUpCorn */
-								   + myArray[r][s-1]*((double)2/16)		/* left */
-								   + myArray[r][s]*((double)1/16)		/* leftDownCorn */	/* <<< WE USE ITSELF */
-								   + myArray[r-1][s]*((double)2/16)		/* up */
-								   + myArray[r][s]*((double)4/16)		/* itself */
-								   + myArray[r][s]*((double)2/16)		/* down */			/* <<< WE USE ITSELF */
-								   + rightCol[r-1]*((double)1/16)		/* rightUpCorn */
-								   + rightCol[r]*((double)2/16)			/* right */
-								   + myArray[r][s]*((double)1/16);		/* rightDownCorn*/	/* <<< WE USE ITSELF */
+					myFinalArray[r][0] = myArray[r][0]*((double)1/16) 		/* leftUpCorn */	/* <<< WE USE ITSELF */
+									   + myArray[r][0]*((double)2/16)		/* left */			/* <<< WE USE ITSELF */
+									   + myArray[r][0]*((double)1/16)		/* leftDownCorn */	/* <<< WE USE ITSELF */
+									   + myArray[r-1][0]*((double)2/16)		/* up */
+									   + myArray[r][0]*((double)4/16)		/* itself */
+									   + bottomRow[0]*((double)2/16)		/* down */
+									   + myArray[r-1][0+1]*((double)1/16)	/* rightUpCorn */
+									   + myArray[r][0+1]*((double)2/16)		/* right */
+									   + bottomRow[1]*((double)1/16);		/* rightDownCorn*/
 
-			}
-			else if( (myRecievedItems.bottomRow == 1) && (myRecievedItems.rightCol == 2) && (myRecievedItems.rightDownCorn == 2) ){
+					myItems.leftDownCorn.recieved = 3;	/* It's ok we applied filter to it. */
+					counterItems ++;
+				}
+				else if( (myItems.bottomRow.recieved == 1) && (myItems.leftCol.recieved == 1) && (myItems.leftDownCorn.recieved == 0) ){
 
-				int r = NROWS/sqrt_comm_sz - 1 ;
-				int s = NCOLS/sqrt_comm_sz - 1 ;
+						MPI_Test(&myItems.leftDownCorn.request,&flag,&status);
+						if( flag ){
 
-				myFinalArray[r][s] = myArray[r-1][s-1]*((double)1/16) 	/* leftUpCorn */
-								   + myArray[r][s-1]*((double)2/16)		/* left */
-								   + bottomRow[s-1]*((double)1/16)		/* leftDownCorn */
-								   + myArray[r-1][s]*((double)2/16)		/* up */
-								   + myArray[r][s]*((double)4/16)		/* itself */
-								   + bottomRow[s]*((double)2/16)		/* down */
-								   + myArray[r][s]*((double)1/16)		/* rightUpCorn */	/* <<< WE USE ITSELF */
-								   + myArray[r][s]*((double)2/16)		/* right */			/* <<< WE USE ITSELF */
-								   + myArray[r][s]*((double)1/16);		/* rightDownCorn*/	/* <<< WE USE ITSELF */
+							//j=0
+							int r = NROWS/sqrt_comm_sz - 1 ;
 
-			}
-			else if( (myRecievedItems.bottomRow == 1) && (myRecievedItems.rightCol == 1) && (myRecievedItems.rightDownCorn == 1) ){
+							myFinalArray[r][0] = leftCol[r-1]*((double)1/16) 		/* leftUpCorn */
+											   + leftCol[r]*((double)2/16)			/* left */
+											   + leftDownCorn*((double)1/16)		/* leftDownCorn */
+											   + myArray[r-1][0]*((double)2/16)		/* up */
+											   + myArray[r][0]*((double)4/16)		/* itself */
+											   + bottomRow[0]*((double)2/16)		/* down */
+											   + myArray[r-1][0+1]*((double)1/16)	/* rightUpCorn */
+											   + myArray[r][0+1]*((double)2/16)		/* right */
+											   + bottomRow[1]*((double)1/16);		/* rightDownCorn*/
 
-				int r = NROWS/sqrt_comm_sz - 1 ;
-				int s = NCOLS/sqrt_comm_sz - 1 ;
+							myItems.leftDownCorn.recieved = 1;
+							counterItems ++;
+							flag = 0 ;
+						}
 
-				myFinalArray[r][s] = myArray[r-1][s-1]*((double)1/16) 	/* leftUpCorn */
-								   + myArray[r][s-1]*((double)2/16)		/* left */
-								   + bottomRow[s-1]*((double)1/16)		/* leftDownCorn */
-								   + myArray[r-1][s]*((double)2/16)		/* up */
-								   + myArray[r][s]*((double)4/16)		/* itself */
-								   + bottomRow[s]*((double)2/16)		/* down */
-								   + rightCol[r-1]*((double)1/16)		/* rightUpCorn */
-								   + rightCol[r]*((double)2/16)			/* right */
-								   + rightDownCorn*((double)1/16);		/* rightDownCorn*/
+
+
+				}
+
+
+				/* Apply filter on the rightDownCorn */
+				if( (myItems.bottomRow.recieved == 3) && (myItems.rightCol.recieved == 3) && (myItems.rightDownCorn.recieved == 2) ){
+
+					int r = NROWS/sqrt_comm_sz - 1 ;
+					int s = NCOLS/sqrt_comm_sz - 1 ;
+
+					myFinalArray[r][s] = myArray[r-1][s-1]*((double)1/16) 	/* leftUpCorn */
+									   + myArray[r][s-1]*((double)2/16)		/* left */
+									   + myArray[r][s]*((double)1/16)		/* leftDownCorn */	/* <<< WE USE ITSELF */
+									   + myArray[r-1][s]*((double)2/16)		/* up */
+									   + myArray[r][s]*((double)4/16)		/* itself */
+									   + myArray[r][s]*((double)2/16)		/* down */			/* <<< WE USE ITSELF */
+									   + myArray[r][s]*((double)1/16)		/* rightUpCorn */	/* <<< WE USE ITSELF */
+									   + myArray[r][s]*((double)2/16)		/* right */			/* <<< WE USE ITSELF */
+									   + myArray[r][s]*((double)1/16);		/* rightDownCorn*/	/* <<< WE USE ITSELF */
+
+					myItems.rightDownCorn.recieved = 3;	/* It's ok we applied filter to it. */
+					counterItems ++;
+				}
+				else if( (myItems.bottomRow.recieved == 3) && (myItems.rightCol.recieved == 1) && (myItems.rightDownCorn.recieved == 2) ){
+
+					int r = NROWS/sqrt_comm_sz - 1 ;
+					int s = NCOLS/sqrt_comm_sz - 1 ;
+
+					myFinalArray[r][s] = myArray[r-1][s-1]*((double)1/16) 	/* leftUpCorn */
+									   + myArray[r][s-1]*((double)2/16)		/* left */
+									   + myArray[r][s]*((double)1/16)		/* leftDownCorn */	/* <<< WE USE ITSELF */
+									   + myArray[r-1][s]*((double)2/16)		/* up */
+									   + myArray[r][s]*((double)4/16)		/* itself */
+									   + myArray[r][s]*((double)2/16)		/* down */			/* <<< WE USE ITSELF */
+									   + rightCol[r-1]*((double)1/16)		/* rightUpCorn */
+									   + rightCol[r]*((double)2/16)			/* right */
+									   + myArray[r][s]*((double)1/16);		/* rightDownCorn*/	/* <<< WE USE ITSELF */
+
+					myItems.rightDownCorn.recieved = 3;	/* It's ok we applied filter to it. */
+					counterItems ++;
+				}
+				else if( (myItems.bottomRow.recieved == 1) && (myItems.rightCol.recieved == 3) && (myItems.rightDownCorn.recieved == 2) ){
+
+					int r = NROWS/sqrt_comm_sz - 1 ;
+					int s = NCOLS/sqrt_comm_sz - 1 ;
+
+					myFinalArray[r][s] = myArray[r-1][s-1]*((double)1/16) 	/* leftUpCorn */
+									   + myArray[r][s-1]*((double)2/16)		/* left */
+									   + bottomRow[s-1]*((double)1/16)		/* leftDownCorn */
+									   + myArray[r-1][s]*((double)2/16)		/* up */
+									   + myArray[r][s]*((double)4/16)		/* itself */
+									   + bottomRow[s]*((double)2/16)		/* down */
+									   + myArray[r][s]*((double)1/16)		/* rightUpCorn */	/* <<< WE USE ITSELF */
+									   + myArray[r][s]*((double)2/16)		/* right */			/* <<< WE USE ITSELF */
+									   + myArray[r][s]*((double)1/16);		/* rightDownCorn*/	/* <<< WE USE ITSELF */
+
+					myItems.rightDownCorn.recieved = 3;	/* It's ok we applied filter to it. */
+					counterItems ++;
+				}
+				else if( (myItems.bottomRow.recieved == 1) && (myItems.rightCol.recieved == 1) && (myItems.rightDownCorn.recieved == 0) ){
+
+						MPI_Test(&myItems.rightDownCorn.request,&flag,&status);
+						if( flag ){
+							int r = NROWS/sqrt_comm_sz - 1 ;
+							int s = NCOLS/sqrt_comm_sz - 1 ;
+
+							myFinalArray[r][s] = myArray[r-1][s-1]*((double)1/16) 	/* leftUpCorn */
+											   + myArray[r][s-1]*((double)2/16)		/* left */
+											   + bottomRow[s-1]*((double)1/16)		/* leftDownCorn */
+											   + myArray[r-1][s]*((double)2/16)		/* up */
+											   + myArray[r][s]*((double)4/16)		/* itself */
+											   + bottomRow[s]*((double)2/16)		/* down */
+											   + rightCol[r-1]*((double)1/16)		/* rightUpCorn */
+											   + rightCol[r]*((double)2/16)			/* right */
+											   + rightDownCorn*((double)1/16);		/* rightDownCorn*/
+							myItems.rightDownCorn.recieved = 1;
+							counterItems ++;
+							flag = 0 ;
+						}
+
+				}
 
 			}
 
