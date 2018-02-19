@@ -90,10 +90,26 @@ P: 18/02/2018
                     mpicc -o finalGrey finalGrey.c -lm ; mpiexec -n 16 finalGrey
 ------------------------------------------------------------------------------------------------------------
 
-P: 18/02/2018
+S: 18/02/2018
 # finalColor1.c
 >Uses 3 Scatter calls for each color channel individually. Doesn't use irecv yet. Will be updated in the near future.
  
 ΟΔΗΓΙΕΣ ΤΡΕΞΙΜΑΤΟΣ: mpicc -o finalColor1 finalColor1.c -lm ; mpiexec -n 4 finalColor1
                     mpicc -o finalColor1 finalColor1.c -lm ; mpiexec -n 16 finalColor1
+------------------------------------------------------------------------------------------------------------
+
+P: 19/02/2018
+# finalColor_1_Scatter.c
+>Uses 1 Scatter call.Each "cell" has 3 chars ( one for each color ) so each time we apply the filter on something, we apply it 3 times
+(one for each color, that means one for j( first color ) , one for j+1 ( second color ) and one for j+2 ( third color ).
+
+TO DO GENERAL:1)Free arrays we malloced and free_types
+	      2)What we should do when we have only 1 process.
+	      3)Reduce and check if last picture is same with pre-last picture.
+	      4)Measure times etc
+	      5)OpenMP + MPI
+	      6)Readme
+ 
+ΟΔΗΓΙΕΣ ΤΡΕΞΙΜΑΤΟΣ: mpicc -o finalColor_1_Scatter finalColor_1_Scatter.c -lm ; mpiexec -n 4 finalColor_1_Scatter
+                    mpicc -o finalColor_1_Scatter finalColor_1_Scatter.c -lm ; mpiexec -n 16 finalColor_1_Scatter
 ------------------------------------------------------------------------------------------------------------
