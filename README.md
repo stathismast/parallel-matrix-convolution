@@ -113,3 +113,18 @@ TO DO GENERAL:1)Free arrays we malloced and free_types
 ΟΔΗΓΙΕΣ ΤΡΕΞΙΜΑΤΟΣ: mpicc -o finalColor_1_Scatter finalColor_1_Scatter.c -lm ; mpiexec -n 4 finalColor_1_Scatter
                     mpicc -o finalColor_1_Scatter finalColor_1_Scatter.c -lm ; mpiexec -n 16 finalColor_1_Scatter
 ------------------------------------------------------------------------------------------------------------
+
+P: 20/02/2018
+# finalGrey_Null.c
+>Uses MPI_PROC_NULL.
+
+TO DO GENERAL:1)Free arrays we malloced and free_types
+	      2)What we should do when we have only 1 process.
+	      3)Reduce and check if last picture is same with pre-last picture.
+	      4)Measure times etc
+	      5)OpenMP + MPI
+	      6)Readme
+ 
+ΟΔΗΓΙΕΣ ΤΡΕΞΙΜΑΤΟΣ: mpicc -o finalGrey_Null finalGrey_Null.c -lm ; mpiexec -n 4 finalGrey_Null
+                    mpicc -o finalGrey_Null finalGrey_Null.c -lm ; mpiexec -n 16 finalGrey_Null
+------------------------------------------------------------------------------------------------------------
