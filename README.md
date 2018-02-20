@@ -113,10 +113,16 @@ TO DO GENERAL:1)Free arrays we malloced and free_types
 ΟΔΗΓΙΕΣ ΤΡΕΞΙΜΑΤΟΣ: mpicc -o finalColor_1_Scatter finalColor_1_Scatter.c -lm ; mpiexec -n 4 finalColor_1_Scatter
                     mpicc -o finalColor_1_Scatter finalColor_1_Scatter.c -lm ; mpiexec -n 16 finalColor_1_Scatter
 ------------------------------------------------------------------------------------------------------------
+S: 19/02/2018
+# finalColor1.c
+>It now utilizes irecv.
+ 
+ΟΔΗΓΙΕΣ ΤΡΕΞΙΜΑΤΟΣ: mpicc -o finalColor1 finalColor1.c -lm ; mpiexec -n 4 finalColor1
+                    mpicc -o finalColor1 finalColor1.c -lm ; mpiexec -n 16 finalColor1
+------------------------------------------------------------------------------------------------------------
 
-<<<<<<< HEAD
 P: 20/02/2018
-# finalGrey_Null.c
+# finalGrey_Null.c AND finalColor_Null.c
 >Uses MPI_PROC_NULL.
 
 TO DO GENERAL:1)Free arrays we malloced and free_types
@@ -125,15 +131,14 @@ TO DO GENERAL:1)Free arrays we malloced and free_types
 	      4)Measure times etc
 	      5)OpenMP + MPI
 	      6)Readme
+	      7)Barrier
+	      8)Parallel I/O
+	      9)Cartesian topology
  
 ΟΔΗΓΙΕΣ ΤΡΕΞΙΜΑΤΟΣ: mpicc -o finalGrey_Null finalGrey_Null.c -lm ; mpiexec -n 4 finalGrey_Null
                     mpicc -o finalGrey_Null finalGrey_Null.c -lm ; mpiexec -n 16 finalGrey_Null
-=======
-S: 19/02/2018
-# finalColor1.c
->It now utilizes irecv.
- 
-ΟΔΗΓΙΕΣ ΤΡΕΞΙΜΑΤΟΣ: mpicc -o finalColor1 finalColor1.c -lm ; mpiexec -n 4 finalColor1
-                    mpicc -o finalColor1 finalColor1.c -lm ; mpiexec -n 16 finalColor1
->>>>>>> d1c4826187fe767d703d9444a3c5dba23942a7e4
-------------------------------------------------------------------------------------------------------------
+
+		    mpicc -o finalColor_Null finalColor_Null.c -lm ; mpiexec -n 4 finalColor_Null
+                    mpicc -o finalColor_Null finalColor_Null.c -lm ; mpiexec -n 16 finalColor_Null
+
+---------------------------------------------------------------------------------------------------------
