@@ -569,7 +569,7 @@ int main(int argc, char *argv[]) {
 		localChanges = 0;
 		while( ( stop!=1 ) && ( x < NROWS/sqrt_comm_sz ) ){
 
-			for( int j=0; j<3*(NCOLS/sqrt_comm_sz); j++ ){
+			for( int j=0; j<(NCOLS/sqrt_comm_sz); j++ ){
 				if( myArray[x][j] != myFinalArray[x][j] ){ /* There is change */
 					stop = 1;
 					localChanges = 1;
