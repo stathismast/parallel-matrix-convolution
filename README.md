@@ -142,3 +142,25 @@ TO DO GENERAL:1)Free arrays we malloced and free_types
                     mpicc -o finalColor_Null finalColor_Null.c -lm ; mpiexec -n 16 finalColor_Null
 
 ---------------------------------------------------------------------------------------------------------
+P: 21/02/2018
+# finalGrey_Null_Reduce.c AND finalColor_Null_Reduce.c
+>Uses MPI_Reduce to check for change.
+
+>It does 2000 loops as it is, and print message that there are no changes from loop 1932 till loop 1999.
+
+TO DO GENERAL:1)Free arrays we malloced and free_types
+	      2)What we should do when we have only 1 process.
+	OK->> 3)Reduce and check if last picture is same with pre-last picture.
+	      4)Measure times etc
+	      5)OpenMP + MPI
+	      6)Readme
+	      7)Barrier
+	      8)Parallel I/O
+	      9)Cartesian topology
+ 
+ΟΔΗΓΙΕΣ ΤΡΕΞΙΜΑΤΟΣ: mpicc -o finalGrey_Null_Reduce finalGrey_Null_Reduce.c -lm ; mpiexec -n 4 finalGrey_Null_Reduce
+                    mpicc -o finalGrey_Null_Reduce finalGrey_Null_Reduce.c -lm ; mpiexec -n 16 finalGrey_Null_Reduce
+
+		    mpicc -o finalColor_Null_Reduce finalColor_Null_Reduce.c -lm ; mpiexec -n 4 finalColor_Null_Reduce
+                    mpicc -o finalColor_Null_Reduce finalColor_Null_Reduce.c -lm ; mpiexec -n 16 finalColor_Null_Reduce
+-----------------------------------------------------------------------------------------------------------
