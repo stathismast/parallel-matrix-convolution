@@ -103,6 +103,7 @@ int main(int argc, char *argv[]) {
 	int counterItems = 0; /* How many items we have recieved */
 	int flag = 0;
 	int i,j,k;
+	char localChanges,globalChanges; /* 0 -> there are no changes, 1 -> there are changes */
 
 	/* Arguments of create_subarray */
 	int sizes[2]; /* size of original array */
@@ -186,7 +187,7 @@ int main(int argc, char *argv[]) {
 			return -1;
 		}
 	}
-
+	
 	sqrt_comm_sz = sqrt(comm_sz);
 
 	topRow = malloc( (colsNumber/sqrt_comm_sz) * sizeof(unsigned char) );
@@ -318,61 +319,6 @@ int main(int argc, char *argv[]) {
 	rightDownCorn = myArray[(rowsNumber/sqrt_comm_sz)-1][(colsNumber/sqrt_comm_sz)-1];
 	leftDownCorn = myArray[(rowsNumber/sqrt_comm_sz)-1][0];
 
-
-	/* Send rows,columns and corners */
-
-	/* Send my topRow to my top process */
-	MPI_Send_init(myArray[0],1,row,myNeighbors.top.rank,0,MPI_COMM_WORLD,&myNeighbors.top.sendRequest);
-
-	/* Send my leftUpCorn to my leftup process */
-	MPI_Send_init(&myArray[0][0],1,MPI_UNSIGNED_CHAR,myNeighbors.leftUp.rank,0,MPI_COMM_WORLD,&myNeighbors.leftUp.sendRequest);
-
-	/* Send my leftCol to my left process */
-	MPI_Send_init(&myArray[0][0],1,column,myNeighbors.left.rank,0,MPI_COMM_WORLD,&myNeighbors.left.sendRequest);
-
-	/* Send my bottomRow to my bottom process */
-	MPI_Send_init(myArray[(rowsNumber/sqrt_comm_sz)-1],1,row,myNeighbors.bottom.rank,0,MPI_COMM_WORLD,&myNeighbors.bottom.sendRequest);
-
-	/* Send my leftDownCorn to my leftdown process */
-	MPI_Send_init(&myArray[(rowsNumber/sqrt_comm_sz)-1][0],1,MPI_UNSIGNED_CHAR,myNeighbors.leftDown.rank,0,MPI_COMM_WORLD,&myNeighbors.leftDown.sendRequest);
-
-	/* Send my rightUpCorn to my rightup process */
-	MPI_Send_init(&myArray[0][(colsNumber/sqrt_comm_sz)-1],1,MPI_UNSIGNED_CHAR,myNeighbors.rightUp.rank,0,MPI_COMM_WORLD,&myNeighbors.rightUp.sendRequest);
-
-	/* Send my rightCol to my right process */
-	MPI_Send_init(&myArray[0][(colsNumber/sqrt_comm_sz)-1],1,column,myNeighbors.right.rank,0,MPI_COMM_WORLD,&myNeighbors.right.sendRequest);
-
-	/* Send my rightDownCorn to my rightdown process */
-	MPI_Send_init(&myArray[(rowsNumber/sqrt_comm_sz)-1][(colsNumber/sqrt_comm_sz)-1],1,MPI_UNSIGNED_CHAR,myNeighbors.rightDown.rank,0,MPI_COMM_WORLD,&myNeighbors.rightDown.sendRequest);
-
-
-	/* Recieve rows,columns and corners */
-
-	/* Recieve topRow from my top process */
-	MPI_Recv_init(topRow,1,row,myNeighbors.top.rank,0,MPI_COMM_WORLD, &myNeighbors.top.recieveRequest);
-
-	/* Recieve leftUpCorn from my leftup process */
-	MPI_Recv_init(&leftUpCorn,1,MPI_UNSIGNED_CHAR,myNeighbors.leftUp.rank,0,MPI_COMM_WORLD, &myNeighbors.leftUp.recieveRequest);
-
-	/* Recieve leftCol from my left process */
-	MPI_Recv_init(leftCol,(rowsNumber/sqrt_comm_sz),MPI_UNSIGNED_CHAR,myNeighbors.left.rank,0,MPI_COMM_WORLD, &myNeighbors.left.recieveRequest);
-
-	/* Recieve bottomRow from my bottom process */
-	MPI_Recv_init(bottomRow,1,row,myNeighbors.bottom.rank,0,MPI_COMM_WORLD, &myNeighbors.bottom.recieveRequest);
-
-	/* Recieve leftDownCorn from my leftdown process */
-	MPI_Recv_init(&leftDownCorn,1,MPI_UNSIGNED_CHAR,myNeighbors.leftDown.rank,0,MPI_COMM_WORLD, &myNeighbors.leftDown.recieveRequest);
-
-	/* Recieve rightUpCorn from my rightup rocess */
-	MPI_Recv_init(&rightUpCorn,1,MPI_UNSIGNED_CHAR,myNeighbors.rightUp.rank,0,MPI_COMM_WORLD, &myNeighbors.rightUp.recieveRequest);
-
-	/* Recieve rightCol from my right process */
-	MPI_Recv_init(rightCol,(rowsNumber/sqrt_comm_sz),MPI_UNSIGNED_CHAR,myNeighbors.right.rank,0,MPI_COMM_WORLD, &myNeighbors.right.recieveRequest);
-
-	/* Recieve rightDownCorn from my rightdown process */
-	MPI_Recv_init(&rightDownCorn,1,MPI_UNSIGNED_CHAR,myNeighbors.rightDown.rank,0,MPI_COMM_WORLD, &myNeighbors.rightDown.recieveRequest);
-
-
 	MPI_Barrier(MPI_COMM_WORLD);
 	startTime = MPI_Wtime();
 
@@ -391,55 +337,55 @@ int main(int argc, char *argv[]) {
 		/* Send rows,columns and corners */
 
 		/* Send my topRow to my top process */
-		MPI_Start(&myNeighbors.top.sendRequest);
+		MPI_Isend(myArray[0],1,row,myNeighbors.top.rank,0,MPI_COMM_WORLD,&myNeighbors.top.sendRequest);
 
 		/* Send my leftUpCorn to my leftup process */
-		MPI_Start(&myNeighbors.leftUp.sendRequest);
+		MPI_Isend(&myArray[0][0],1,MPI_UNSIGNED_CHAR,myNeighbors.leftUp.rank,0,MPI_COMM_WORLD,&myNeighbors.leftUp.sendRequest);
 
 		/* Send my leftCol to my left process */
-		MPI_Start(&myNeighbors.left.sendRequest);
+		MPI_Isend(&myArray[0][0],1,column,myNeighbors.left.rank,0,MPI_COMM_WORLD,&myNeighbors.left.sendRequest);
 
 		/* Send my bottomRow to my bottom process */
-		MPI_Start(&myNeighbors.bottom.sendRequest);
+		MPI_Isend(myArray[(rowsNumber/sqrt_comm_sz)-1],1,row,myNeighbors.bottom.rank,0,MPI_COMM_WORLD,&myNeighbors.bottom.sendRequest);
 
 		/* Send my leftDownCorn to my leftdown process */
-		MPI_Start(&myNeighbors.leftDown.sendRequest);
+		MPI_Isend(&myArray[(rowsNumber/sqrt_comm_sz)-1][0],1,MPI_UNSIGNED_CHAR,myNeighbors.leftDown.rank,0,MPI_COMM_WORLD,&myNeighbors.leftDown.sendRequest);
 
 		/* Send my rightUpCorn to my rightup process */
-		MPI_Start(&myNeighbors.rightUp.sendRequest);
+		MPI_Isend(&myArray[0][(colsNumber/sqrt_comm_sz)-1],1,MPI_UNSIGNED_CHAR,myNeighbors.rightUp.rank,0,MPI_COMM_WORLD,&myNeighbors.rightUp.sendRequest);
 
 		/* Send my rightCol to my right process */
-		MPI_Start(&myNeighbors.right.sendRequest);
+		MPI_Isend(&myArray[0][(colsNumber/sqrt_comm_sz)-1],1,column,myNeighbors.right.rank,0,MPI_COMM_WORLD,&myNeighbors.right.sendRequest);
 
 		/* Send my rightDownCorn to my rightdown process */
-		MPI_Start(&myNeighbors.rightDown.sendRequest);
+		MPI_Isend(&myArray[(rowsNumber/sqrt_comm_sz)-1][(colsNumber/sqrt_comm_sz)-1],1,MPI_UNSIGNED_CHAR,myNeighbors.rightDown.rank,0,MPI_COMM_WORLD,&myNeighbors.rightDown.sendRequest);
 
 
 		/* Recieve rows,columns and corners */
 
 		/* Recieve topRow from my top process */
-		MPI_Start(&myNeighbors.top.recieveRequest);
+		MPI_Irecv(topRow,1,row,myNeighbors.top.rank,0,MPI_COMM_WORLD, &myNeighbors.top.recieveRequest);
 
 		/* Recieve leftUpCorn from my leftup process */
-		MPI_Start(&myNeighbors.leftUp.recieveRequest);
+		MPI_Irecv(&leftUpCorn,1,MPI_UNSIGNED_CHAR,myNeighbors.leftUp.rank,0,MPI_COMM_WORLD, &myNeighbors.leftUp.recieveRequest);
 
 		/* Recieve leftCol from my left process */
-		MPI_Start(&myNeighbors.left.recieveRequest);
+		MPI_Irecv(leftCol,(rowsNumber/sqrt_comm_sz),MPI_UNSIGNED_CHAR,myNeighbors.left.rank,0,MPI_COMM_WORLD, &myNeighbors.left.recieveRequest);
 
 		/* Recieve bottomRow from my bottom process */
-		MPI_Start(&myNeighbors.bottom.recieveRequest);
+		MPI_Irecv(bottomRow,1,row,myNeighbors.bottom.rank,0,MPI_COMM_WORLD, &myNeighbors.bottom.recieveRequest);
 
 		/* Recieve leftDownCorn from my leftdown process */
-		MPI_Start(&myNeighbors.leftDown.recieveRequest);
+		MPI_Irecv(&leftDownCorn,1,MPI_UNSIGNED_CHAR,myNeighbors.leftDown.rank,0,MPI_COMM_WORLD, &myNeighbors.leftDown.recieveRequest);
 
 		/* Recieve rightUpCorn from my rightup rocess */
-		MPI_Start(&myNeighbors.rightUp.recieveRequest);
+		MPI_Irecv(&rightUpCorn,1,MPI_UNSIGNED_CHAR,myNeighbors.rightUp.rank,0,MPI_COMM_WORLD, &myNeighbors.rightUp.recieveRequest);
 
 		/* Recieve rightCol from my right process */
-		MPI_Start(&myNeighbors.right.recieveRequest);
+		MPI_Irecv(rightCol,(rowsNumber/sqrt_comm_sz),MPI_UNSIGNED_CHAR,myNeighbors.right.rank,0,MPI_COMM_WORLD, &myNeighbors.right.recieveRequest);
 
 		/* Recieve rightDownCorn from my rightdown process */
-		MPI_Start(&myNeighbors.rightDown.recieveRequest);
+		MPI_Irecv(&rightDownCorn,1,MPI_UNSIGNED_CHAR,myNeighbors.rightDown.rank,0,MPI_COMM_WORLD, &myNeighbors.rightDown.recieveRequest);
 
 
 		/* Apply filter on the inner pixels */
@@ -661,6 +607,34 @@ int main(int argc, char *argv[]) {
 		temp = myArray;
 		myArray = myFinalArray;
 		myFinalArray = temp;
+
+		/* Check if there are changes */
+		int x = 0 ;
+		int stop = 0;
+		localChanges = 0;
+		while( ( stop!=1 ) && ( x < rowsNumber/sqrt_comm_sz ) ){
+
+			for( int j=0; j<(colsNumber/sqrt_comm_sz); j++ ){
+				if( myArray[x][j] != myFinalArray[x][j] ){ /* There is change */
+					stop = 1;
+					localChanges = 1;
+					break;
+				}
+			}
+			x++;
+		}
+		MPI_Reduce(&localChanges,&globalChanges,1,MPI_CHAR,MPI_LOR,0,MPI_COMM_WORLD);
+		if( my_rank == 0 ){
+			if( !globalChanges ){
+				/* There are no changes */
+				printf("THERE ARE NO CHANGES WOW for i %d \n",i );
+			}
+			else{
+				/* There are changes somewhere */
+			}
+		}
+		MPI_Barrier(MPI_COMM_WORLD);
+
 	}
 
 	endTime = MPI_Wtime();
@@ -680,23 +654,6 @@ int main(int argc, char *argv[]) {
 		}
 		fclose(outputFile);
 	}
-
-	MPI_Request_free(&myNeighbors.top.sendRequest);
-	MPI_Request_free(&myNeighbors.leftUp.sendRequest);
-	MPI_Request_free(&myNeighbors.left.sendRequest);
-	MPI_Request_free(&myNeighbors.bottom.sendRequest);
-	MPI_Request_free(&myNeighbors.leftDown.sendRequest);
-	MPI_Request_free(&myNeighbors.rightUp.sendRequest);
-	MPI_Request_free(&myNeighbors.right.sendRequest);
-	MPI_Request_free(&myNeighbors.rightDown.sendRequest);
-	MPI_Request_free(&myNeighbors.top.recieveRequest);
-	MPI_Request_free(&myNeighbors.leftUp.recieveRequest);
-	MPI_Request_free(&myNeighbors.left.recieveRequest);
-	MPI_Request_free(&myNeighbors.bottom.recieveRequest);
-	MPI_Request_free(&myNeighbors.leftDown.recieveRequest);
-	MPI_Request_free(&myNeighbors.rightUp.recieveRequest);
-	MPI_Request_free(&myNeighbors.right.recieveRequest);
-	MPI_Request_free(&myNeighbors.rightDown.recieveRequest);
 
 	free(topRow);
 	free(bottomRow);
