@@ -176,22 +176,22 @@ finalGrey_Null_Reduce.c
 
 TO DO:
 
-1)Parallel I/O
-2)Cartesian Topology
-3)Start - Init
-4)ApplyFilter not to be function and inline get2DArray/getRGBArray
-5)Maybe we take as arguments fileName,pictureSize ( rows and cols ) so as to be easier when we measure times
-6)OpenMP
-7)Readme
+		1)Parallel I/O
+		2)Cartesian Topology
+		3)Start - Init
+		4)ApplyFilter not to be function and inline get2DArray/getRGBArray
+>>>>> DONE 	5)Maybe we take as arguments fileName,pictureSize ( rows and cols ) so as to be easier when we measure times
+		6)OpenMP
+		7)Readme
 
 
 How to run:
-mpicc -o finalColor_Null finalColor_Null.c -lm ; mpiexec -n <N> finalColor_Null
+mpicc -o finalColor_Null finalColor_Null.c -lm ; mpiexec -n <N> finalColor_Null	[-i inputFileName] [-o outputFileName] [-s rowsNumber colsNumber] [-f filterApplications]
 
-mpicc -o finalColor_Null_Reduce finalColor_Null_Reduce.c -lm ; mpiexec -n <N> finalColor_Null_Reduce
+mpicc -o finalColor_Null_Reduce finalColor_Null_Reduce.c -lm ; mpiexec -n <N> finalColor_Null_Reduce [-i inputFileName] [-o outputFileName] [-s rowsNumber colsNumber] [-f filterApplications]
 
-mpicc -o finalGrey_Null finalGrey_Null.c -lm ; mpiexec -n <N> finalGrey_Null
+mpicc -o finalGrey_Null finalGrey_Null.c -lm ; mpiexec -n <N> finalGrey_Null [-i inputFileName] [-o outputFileName] [-s rowsNumber colsNumber] [-f filterApplications]
 
-mpicc -o finalGrey_Null_Reduce finalGrey_Null_Reduce.c -lm ; mpiexec -n <N> finalGrey_Null_Reduce
+mpicc -o finalGrey_Null_Reduce finalGrey_Null_Reduce.c -lm ; mpiexec -n <N> finalGrey_Null_Reduce [-i inputFileName] [-o outputFileName] [-s rowsNumber colsNumber] [-f filterApplications]
 
 -------------------------------------------------------------------------------------------------------------------
