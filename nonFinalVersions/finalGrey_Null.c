@@ -52,9 +52,6 @@ void applyFilter(unsigned char **original,unsigned char **final, int rows, int c
 }
 
 int main(int argc, char *argv[]) {
-
-	double startTime, endTime;
-
 	int comm_sz;               /* Number of processes    */
 	int my_rank;               /* My process rank        */
 
@@ -183,7 +180,6 @@ int main(int argc, char *argv[]) {
 			}
 		}
 
-		fclose(inputFile);
 	}
 
 	MPI_Scatterv(*array2D,counts,displs, /*process i gets counts[i] types(subArrays) from displs[i] */
@@ -209,25 +205,48 @@ int main(int argc, char *argv[]) {
 		myNeighbors.leftUp.rank = MPI_PROC_NULL;
 		myNeighbors.rightUp.rank = MPI_PROC_NULL;
 
-	}
+		if( (my_rank%sqrt_comm_sz) == 0 ){ //top left corner
 
-	if( my_rank >= (comm_sz - sqrt_comm_sz) ){ //bottom row
+			myNeighbors.left.rank = MPI_PROC_NULL;
+			myNeighbors.leftDown.rank = MPI_PROC_NULL;
+
+		}
+		else if( (my_rank%sqrt_comm_sz) == (sqrt_comm_sz-1) ){ //top right corner
+
+			myNeighbors.right.rank = MPI_PROC_NULL;
+			myNeighbors.rightDown.rank = MPI_PROC_NULL;
+
+		}
+
+	}
+	else if( my_rank >= (comm_sz - sqrt_comm_sz) ){ //bottom row
 
 		myNeighbors.bottom.rank = MPI_PROC_NULL;
 		myNeighbors.rightDown.rank = MPI_PROC_NULL;
 		myNeighbors.leftDown.rank = MPI_PROC_NULL;
 
-	}
+		if( (my_rank%sqrt_comm_sz) == 0 ){ //bottom left corner
 
-	if( (my_rank%sqrt_comm_sz) == 0 ){ //leftmost column
+			myNeighbors.left.rank = MPI_PROC_NULL;
+			myNeighbors.leftUp.rank = MPI_PROC_NULL;
+
+		}
+		else if( (my_rank%sqrt_comm_sz) == (sqrt_comm_sz-1) ){ //bottom right corner
+
+			myNeighbors.right.rank = MPI_PROC_NULL;
+			myNeighbors.rightUp.rank = MPI_PROC_NULL;
+
+		}
+
+	}
+	else if( (my_rank%sqrt_comm_sz) == 0 ){ //leftmost column except corners
 
 		myNeighbors.left.rank = MPI_PROC_NULL;
 		myNeighbors.leftUp.rank = MPI_PROC_NULL;
 		myNeighbors.leftDown.rank = MPI_PROC_NULL;
 
 	}
-
-	if( (my_rank%sqrt_comm_sz) == (sqrt_comm_sz-1) ){ //rightmost column
+	else if( (my_rank%sqrt_comm_sz) == (sqrt_comm_sz-1) ){ //rightmost column except corners
 
 		myNeighbors.right.rank = MPI_PROC_NULL;
 		myNeighbors.rightUp.rank = MPI_PROC_NULL;
@@ -257,10 +276,7 @@ int main(int argc, char *argv[]) {
 	rightDownCorn = myArray[(NROWS/sqrt_comm_sz)-1][(NCOLS/sqrt_comm_sz)-1];
 	leftDownCorn = myArray[(NROWS/sqrt_comm_sz)-1][0];
 
-	MPI_Barrier(MPI_COMM_WORLD);
-	startTime = MPI_Wtime();
-
-	for(i=0; i<3; i++){
+	for(i=0; i<100; i++){
 
 		/* Initialize recieved flags for MPI_Test */
 		myNeighbors.top.recieved = 0;
@@ -547,9 +563,6 @@ int main(int argc, char *argv[]) {
 		myFinalArray = temp;
 	}
 
-	endTime = MPI_Wtime();
-	printf("%d.\t%f seconds\n", my_rank, endTime-startTime);
-
 	MPI_Gatherv(*myArray,(NROWS/sqrt_comm_sz)*(NCOLS/sqrt_comm_sz),MPI_UNSIGNED_CHAR,*final2D,counts,displs,resizedtype,0,MPI_COMM_WORLD );
 
 	if( my_rank == 0 ){
@@ -562,31 +575,8 @@ int main(int argc, char *argv[]) {
 				fputc(final2D[i][j], outputFile);
 			}
 		}
-		fclose(outputFile);
 	}
 
-	free(topRow);
-	free(bottomRow);
-	free(leftCol);
-	free(rightCol);
-
-	free(*array2D);
-	free(array2D);
-	free(*final2D);
-	free(final2D);
-
-	free(*myArray);
-	free(myArray);
-	free(*myFinalArray);
-	free(myFinalArray);
-
-	free(counts);
-	free(displs);
-
-	MPI_Type_free(&type);
-	MPI_Type_free(&resizedtype);
-	MPI_Type_free(&row);
-	MPI_Type_free(&column);
 
 	/* Shut down MPI */
 	MPI_Finalize();

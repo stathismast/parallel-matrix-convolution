@@ -164,3 +164,34 @@ TO DO GENERAL:1)Free arrays we malloced and free_types
 		    mpicc -o finalColor_Null_Reduce finalColor_Null_Reduce.c -lm ; mpiexec -n 4 finalColor_Null_Reduce
                     mpicc -o finalColor_Null_Reduce finalColor_Null_Reduce.c -lm ; mpiexec -n 16 finalColor_Null_Reduce
 -----------------------------------------------------------------------------------------------------------
+4 Final Versions 
+
+finalColor_Null.c
+finalColor_Null_Reduce.c
+finalGrey_Null.c
+finalGrey_Null_Reduce.c
+
+> 2 for grey ( 1 with reduce and 1 without )
+> 2 for color ( 1 with reduce and 1 without )
+
+TO DO:
+
+1)Parallel I/O
+2)Cartesian Topology
+3)Start - Init
+4)ApplyFilter not to be function and inline get2DArray/getRGBArray
+5)Maybe we take as arguments fileName,pictureSize ( rows and cols ) so as to be easier when we measure times
+6)OpenMP
+7)Readme
+
+
+How to run:
+mpicc -o finalColor_Null finalColor_Null.c -lm ; mpiexec -n <N> finalColor_Null
+
+mpicc -o finalColor_Null_Reduce finalColor_Null_Reduce.c -lm ; mpiexec -n <N> finalColor_Null_Reduce
+
+mpicc -o finalGrey_Null finalGrey_Null.c -lm ; mpiexec -n <N> finalGrey_Null
+
+mpicc -o finalGrey_Null_Reduce finalGrey_Null_Reduce.c -lm ; mpiexec -n <N> finalGrey_Null_Reduce
+
+-------------------------------------------------------------------------------------------------------------------
