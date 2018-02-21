@@ -4,9 +4,6 @@
 #include <string.h>
 #include <math.h>
 
-#define NROWS 2520
-#define NCOLS 1920
-
 #define TOPLEFT     my_rank-sqrt_comm_sz-1
 #define TOP         my_rank-sqrt_comm_sz
 #define TOPRIGHT    my_rank-sqrt_comm_sz+1
@@ -121,7 +118,61 @@ int main(int argc, char *argv[]) {
 	/* Arguments of Scatterv */
 	int *counts; /* How many pieces of data everyone has in units of block */
 
-	int *displs; /* The starting point of everyone's data in the global array, in block extents ( NCOLS/sqrt_comm_sz ints )  */
+	int *displs; /* The starting point of everyone's data in the global array, in block extents ( colsNumber/sqrt_comm_sz ints )  */
+
+	char inputFileName[40] = "waterfall_1920_2520.raw";
+	char outputFileName[40] = "outputColor.raw";
+	int rowsNumber = 2520;
+	int colsNumber = 1920;
+	int filterApplications = 100;
+	int error = 0;
+
+	for( int i=1; i<argc; i++ ){
+
+		if( strcmp(argv[i],"-i") == 0 ){
+			if( i+1 < argc ){
+				i++;
+				strcpy(inputFileName,argv[i]);
+			}
+			else{
+				error = 1;
+				break;
+			}
+		}
+		else if(strcmp(argv[i],"-o") == 0){
+			if( i+1 < argc ){
+				i++;
+				strcpy(outputFileName,argv[i]);
+			}
+			else{
+				error = 1;
+				break;
+			}
+		}
+		else if(strcmp(argv[i],"-s") == 0){
+			if( i+2 < argc ){
+				i++;
+				rowsNumber = atoi(argv[i]);
+				i++;
+				colsNumber = atoi(argv[i]);
+			}
+			else{
+				error = 1;
+				break;
+			}
+		}
+		else if(strcmp(argv[i],"-f") == 0){
+			if( i+1 < argc ){
+				i++;
+				filterApplications = atoi(argv[i]);
+			}
+			else{
+				error = 1;
+				break;
+			}
+		}
+
+	}
 
 	/* Start up MPI */
 	MPI_Init(&argc, &argv);
@@ -132,30 +183,40 @@ int main(int argc, char *argv[]) {
 	/* Get my rank among all the processes */
 	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
 
+	if(error){
+		if( my_rank == 0 ){
+			printf("Wrong argument. Please execute again with this form: %s [-i inputFileName] [-o outputFileName] [-s rowsNumber colsNumber] [-f filterApplications] \n",argv[0] );
+			return -1;
+		}
+		else{
+			return -1;
+		}
+	}
+
 	sqrt_comm_sz = sqrt(comm_sz);
 
-	topRow = malloc( (NCOLS/sqrt_comm_sz) * ( 3 * sizeof(unsigned char) ) );
-	bottomRow = malloc( (NCOLS/sqrt_comm_sz) * ( 3 * sizeof(unsigned char) ) );
+	topRow = malloc( (colsNumber/sqrt_comm_sz) * ( 3 * sizeof(unsigned char) ) );
+	bottomRow = malloc( (colsNumber/sqrt_comm_sz) * ( 3 * sizeof(unsigned char) ) );
 
-	leftCol = malloc( (NROWS/sqrt_comm_sz) * ( 3 * sizeof(unsigned char) ) );
-	rightCol = malloc( (NROWS/sqrt_comm_sz) * ( 3 * sizeof(unsigned char) ) );
+	leftCol = malloc( (rowsNumber/sqrt_comm_sz) * ( 3 * sizeof(unsigned char) ) );
+	rightCol = malloc( (rowsNumber/sqrt_comm_sz) * ( 3 * sizeof(unsigned char) ) );
 
 	leftUpCorn = malloc( 3 * sizeof(unsigned char) );
 	rightUpCorn = malloc( 3 * sizeof(unsigned char) );
 	rightDownCorn = malloc( 3 * sizeof(unsigned char) );
 	leftDownCorn = malloc( 3 * sizeof(unsigned char) );
 
-	array2D = getRGBArray(NROWS,NCOLS);
-	final2D = getRGBArray(NROWS,NCOLS);
+	array2D = getRGBArray(rowsNumber,colsNumber);
+	final2D = getRGBArray(rowsNumber,colsNumber);
 
-	myArray = getRGBArray(NROWS/sqrt_comm_sz,NCOLS/sqrt_comm_sz);
-	myFinalArray = getRGBArray(NROWS/sqrt_comm_sz,NCOLS/sqrt_comm_sz);
+	myArray = getRGBArray(rowsNumber/sqrt_comm_sz,colsNumber/sqrt_comm_sz);
+	myFinalArray = getRGBArray(rowsNumber/sqrt_comm_sz,colsNumber/sqrt_comm_sz);
 
 	/* Arguments of create_subarray */
-	sizes[0] = NROWS;
-	sizes[1] = 3 * NCOLS;
-	subsizes[0] = NROWS/sqrt_comm_sz;
-	subsizes[1] = 3 * (NCOLS/sqrt_comm_sz);
+	sizes[0] = rowsNumber;
+	sizes[1] = 3 * colsNumber;
+	subsizes[0] = rowsNumber/sqrt_comm_sz;
+	subsizes[1] = 3 * (colsNumber/sqrt_comm_sz);
 
 	counts = malloc( comm_sz * sizeof(int) ); /* How many pieces of data everyone has in units of block */
 	for ( i=0; i<comm_sz; i++ ){
@@ -166,30 +227,30 @@ int main(int argc, char *argv[]) {
 	k=0;
 	for( i=0; i<sqrt_comm_sz; i++ ){
 		for( j=0; j<sqrt_comm_sz; j++ ){
-			displs[k] = i*NROWS+j;
+			displs[k] = i*rowsNumber+j;
 			k++;
 		}
 	}
 
 	/* Creating derived Datatype */
 	MPI_Type_create_subarray(2,sizes,subsizes,starts,MPI_ORDER_C,MPI_UNSIGNED_CHAR,&type);
-	MPI_Type_create_resized(type,0,(NCOLS/sqrt_comm_sz)*( 3 * sizeof(unsigned char) ),&resizedtype);
+	MPI_Type_create_resized(type,0,(colsNumber/sqrt_comm_sz)*( 3 * sizeof(unsigned char) ),&resizedtype);
 	MPI_Type_commit(&resizedtype);
 
-	MPI_Type_contiguous(3*(NCOLS/sqrt_comm_sz),MPI_UNSIGNED_CHAR,&row);
+	MPI_Type_contiguous(3*(colsNumber/sqrt_comm_sz),MPI_UNSIGNED_CHAR,&row);
 	MPI_Type_commit(&row);
 
-	MPI_Type_vector(NROWS/sqrt_comm_sz,3,3*(NCOLS/sqrt_comm_sz),MPI_UNSIGNED_CHAR,&column);
+	MPI_Type_vector(rowsNumber/sqrt_comm_sz,3,3*(colsNumber/sqrt_comm_sz),MPI_UNSIGNED_CHAR,&column);
 	MPI_Type_commit(&column);
 
 
 	if (my_rank == 0) {
 
 		/* Fill in array from file*/
-		FILE *inputFile = fopen("waterfall_1920_2520.raw", "r");
+		FILE *inputFile = fopen(inputFileName, "r");
 
-		for( i=0; i<NROWS; i++ ){
-			for( j=0; j<3*NCOLS; j = j+3 ){
+		for( i=0; i<rowsNumber; i++ ){
+			for( j=0; j<3*colsNumber; j = j+3 ){
 				array2D[i][j] = fgetc(inputFile);
 				array2D[i][j+1] = fgetc(inputFile);
 				array2D[i][j+2] = fgetc(inputFile);
@@ -201,7 +262,7 @@ int main(int argc, char *argv[]) {
 
 	MPI_Scatterv(*array2D,counts,displs, /*process i gets counts[i] types(subArrays) from displs[i] */
 				 resizedtype,
-				 *myArray,(NROWS/sqrt_comm_sz)*(3*(NCOLS/sqrt_comm_sz)),MPI_UNSIGNED_CHAR, /* I'm recieving (NROWS/sqrt_comm_sz)*3*(NCOLS/sqrt_comm_sz) MPI_UNSIGNED_CHARs into myArray */
+				 *myArray,(rowsNumber/sqrt_comm_sz)*(3*(colsNumber/sqrt_comm_sz)),MPI_UNSIGNED_CHAR, /* I'm recieving (rowsNumber/sqrt_comm_sz)*3*(colsNumber/sqrt_comm_sz) MPI_UNSIGNED_CHARs into myArray */
 				 0,MPI_COMM_WORLD );
 
 	/* Determine my neighbors */
@@ -249,42 +310,42 @@ int main(int argc, char *argv[]) {
 	}
 
 	/* Prepare buffers with default values */
-	for( i=0; i<3*(NCOLS/sqrt_comm_sz); i=i+3 ){
+	for( i=0; i<3*(colsNumber/sqrt_comm_sz); i=i+3 ){
 		for(int c=0; c<=2; c++ ){ /* For 3 colors j,j+1,j+2 */
 			topRow[i+c] = myArray[0][i+c];
 		}
 	}
 
-	for( i=0; i<3*(NCOLS/sqrt_comm_sz); i=i+3 ){
+	for( i=0; i<3*(colsNumber/sqrt_comm_sz); i=i+3 ){
 		for(int c=0; c<=2; c++ ){ /* For 3 colors j,j+1,j+2 */
-			bottomRow[i+c] = myArray[(NROWS/sqrt_comm_sz)-1][i+c];
+			bottomRow[i+c] = myArray[(rowsNumber/sqrt_comm_sz)-1][i+c];
 		}
 	}
 
-	for( i=0; i<NROWS/sqrt_comm_sz; i++ ){
+	for( i=0; i<rowsNumber/sqrt_comm_sz; i++ ){
 		for(int c=0; c<=2; c++ ){ /* For 3 colors j,j+1,j+2 */
 			leftCol[3*i+c] = myArray[i][0+c];
 		}
 
 	}
 
-	for( i=0; i<NROWS/sqrt_comm_sz; i++ ){
+	for( i=0; i<rowsNumber/sqrt_comm_sz; i++ ){
 		for(int c=0; c<=2; c++ ){ /* For 3 colors j,j+1,j+2 */
-			rightCol[3*i+c] = myArray[i][3*(NCOLS/sqrt_comm_sz)-3+c];
+			rightCol[3*i+c] = myArray[i][3*(colsNumber/sqrt_comm_sz)-3+c];
 		}
 	}
 
 	for(int c=0; c<=2; c++ ){ /* For 3 colors j,j+1,j+2 */
 		leftUpCorn[c] = myArray[0][0+c];
-		rightUpCorn[c] = myArray[0][3*(NCOLS/sqrt_comm_sz)-3+c];
-		rightDownCorn[c] = myArray[(NROWS/sqrt_comm_sz)-1][3*(NCOLS/sqrt_comm_sz)-3+c];
-		leftDownCorn[c] = myArray[(NROWS/sqrt_comm_sz)-1][0+c];
+		rightUpCorn[c] = myArray[0][3*(colsNumber/sqrt_comm_sz)-3+c];
+		rightDownCorn[c] = myArray[(rowsNumber/sqrt_comm_sz)-1][3*(colsNumber/sqrt_comm_sz)-3+c];
+		leftDownCorn[c] = myArray[(rowsNumber/sqrt_comm_sz)-1][0+c];
 	}
 
 	MPI_Barrier(MPI_COMM_WORLD);
 	startTime = MPI_Wtime();
 
-	for(i=0; i<3; i++){
+	for(i=0; i<filterApplications; i++){
 
 		/* Initialize recieved flags for MPI_Test */
 		myNeighbors.top.recieved = 0;
@@ -308,19 +369,19 @@ int main(int argc, char *argv[]) {
 		MPI_Isend(&myArray[0][0],1,column,myNeighbors.left.rank,0,MPI_COMM_WORLD,&myNeighbors.left.sendRequest);
 
 		/* Send my bottomRow to my bottom process */
-		MPI_Isend(myArray[(NROWS/sqrt_comm_sz)-1],1,row,myNeighbors.bottom.rank,0,MPI_COMM_WORLD,&myNeighbors.bottom.sendRequest);
+		MPI_Isend(myArray[(rowsNumber/sqrt_comm_sz)-1],1,row,myNeighbors.bottom.rank,0,MPI_COMM_WORLD,&myNeighbors.bottom.sendRequest);
 
 		/* Send my leftDownCorn to my leftdown process */
-		MPI_Isend(&myArray[(NROWS/sqrt_comm_sz)-1][0],3,MPI_UNSIGNED_CHAR,myNeighbors.leftDown.rank,0,MPI_COMM_WORLD,&myNeighbors.leftDown.sendRequest);
+		MPI_Isend(&myArray[(rowsNumber/sqrt_comm_sz)-1][0],3,MPI_UNSIGNED_CHAR,myNeighbors.leftDown.rank,0,MPI_COMM_WORLD,&myNeighbors.leftDown.sendRequest);
 
 		/* Send my rightUpCorn to my rightup process */
-		MPI_Isend(&myArray[0][3*(NCOLS/sqrt_comm_sz)-3],3,MPI_UNSIGNED_CHAR,myNeighbors.rightUp.rank,0,MPI_COMM_WORLD,&myNeighbors.rightUp.sendRequest);
+		MPI_Isend(&myArray[0][3*(colsNumber/sqrt_comm_sz)-3],3,MPI_UNSIGNED_CHAR,myNeighbors.rightUp.rank,0,MPI_COMM_WORLD,&myNeighbors.rightUp.sendRequest);
 
 		/* Send my rightCol to my right process */
-		MPI_Isend(&myArray[0][3*(NCOLS/sqrt_comm_sz)-3],1,column,myNeighbors.right.rank,0,MPI_COMM_WORLD,&myNeighbors.right.sendRequest);
+		MPI_Isend(&myArray[0][3*(colsNumber/sqrt_comm_sz)-3],1,column,myNeighbors.right.rank,0,MPI_COMM_WORLD,&myNeighbors.right.sendRequest);
 
 		/* Send my rightDownCorn to my rightdown process */
-		MPI_Isend(&myArray[(NROWS/sqrt_comm_sz)-1][3*(NCOLS/sqrt_comm_sz)-3],3,MPI_UNSIGNED_CHAR,myNeighbors.rightDown.rank,0,MPI_COMM_WORLD,&myNeighbors.rightDown.sendRequest);
+		MPI_Isend(&myArray[(rowsNumber/sqrt_comm_sz)-1][3*(colsNumber/sqrt_comm_sz)-3],3,MPI_UNSIGNED_CHAR,myNeighbors.rightDown.rank,0,MPI_COMM_WORLD,&myNeighbors.rightDown.sendRequest);
 
 
 		/* Recieve rows,columns and corners */
@@ -332,7 +393,7 @@ int main(int argc, char *argv[]) {
 		MPI_Irecv(leftUpCorn,3,MPI_UNSIGNED_CHAR,myNeighbors.leftUp.rank,0,MPI_COMM_WORLD, &myNeighbors.leftUp.recieveRequest);
 
 		/* Recieve leftCol from my left process */
-		MPI_Irecv(leftCol,3*(NROWS/sqrt_comm_sz),MPI_UNSIGNED_CHAR,myNeighbors.left.rank,0,MPI_COMM_WORLD, &myNeighbors.left.recieveRequest);
+		MPI_Irecv(leftCol,3*(rowsNumber/sqrt_comm_sz),MPI_UNSIGNED_CHAR,myNeighbors.left.rank,0,MPI_COMM_WORLD, &myNeighbors.left.recieveRequest);
 
 		/* Recieve bottomRow from my bottom process */
 		MPI_Irecv(bottomRow,1,row,myNeighbors.bottom.rank,0,MPI_COMM_WORLD, &myNeighbors.bottom.recieveRequest);
@@ -344,14 +405,14 @@ int main(int argc, char *argv[]) {
 		MPI_Irecv(rightUpCorn,3,MPI_UNSIGNED_CHAR,myNeighbors.rightUp.rank,0,MPI_COMM_WORLD, &myNeighbors.rightUp.recieveRequest);
 
 		/* Recieve rightCol from my right process */
-		MPI_Irecv(rightCol,3*(NROWS/sqrt_comm_sz),MPI_UNSIGNED_CHAR,myNeighbors.right.rank,0,MPI_COMM_WORLD, &myNeighbors.right.recieveRequest);
+		MPI_Irecv(rightCol,3*(rowsNumber/sqrt_comm_sz),MPI_UNSIGNED_CHAR,myNeighbors.right.rank,0,MPI_COMM_WORLD, &myNeighbors.right.recieveRequest);
 
 		/* Recieve rightDownCorn from my rightdown process */
 		MPI_Irecv(rightDownCorn,3,MPI_UNSIGNED_CHAR,myNeighbors.rightDown.rank,0,MPI_COMM_WORLD, &myNeighbors.rightDown.recieveRequest);
 
 
 		/* Apply filter on the inner pixels */
-		applyFilter(myArray,myFinalArray,(NROWS/sqrt_comm_sz), (NCOLS/sqrt_comm_sz));
+		applyFilter(myArray,myFinalArray,(rowsNumber/sqrt_comm_sz), (colsNumber/sqrt_comm_sz));
 
 		counterItems = 0;
 
@@ -364,7 +425,7 @@ int main(int argc, char *argv[]) {
 				MPI_Test(&myNeighbors.top.recieveRequest,&flag,&status);
 				if( flag ){
 					// i=0
-					for( j=3; j<3*( (NCOLS/sqrt_comm_sz)-1 ); j = j + 3 ){
+					for( j=3; j<3*( (colsNumber/sqrt_comm_sz)-1 ); j = j + 3 ){
 						for(int c=0; c<=2; c++ ){ /* For 3 colors j,j+1,j+2 */
 							myFinalArray[0][j+c] = topRow[j-3+c]*((double)1/16) 		/* leftUpCorn */
 												 + myArray[0][j-3+c]*((double)2/16)		/* left */
@@ -389,8 +450,8 @@ int main(int argc, char *argv[]) {
 
 				MPI_Test(&myNeighbors.bottom.recieveRequest,&flag,&status);
 				if( flag ){
-					int s = (NROWS/sqrt_comm_sz)-1;
-					for( j=3; j<3*( (NCOLS/sqrt_comm_sz)-1 ); j = j + 3 ){
+					int s = (rowsNumber/sqrt_comm_sz)-1;
+					for( j=3; j<3*( (colsNumber/sqrt_comm_sz)-1 ); j = j + 3 ){
 						for(int c=0; c<=2; c++ ){ /* For 3 colors j,j+1,j+2 */
 							myFinalArray[s][j+c] = myArray[s-1][j-3+c]*((double)1/16) 	/* leftUpCorn */
 												 + myArray[s][j-3+c]*((double)2/16)		/* left */
@@ -416,7 +477,7 @@ int main(int argc, char *argv[]) {
 				MPI_Test(&myNeighbors.left.recieveRequest,&flag,&status);
 				if( flag ){
 					//j=0
-					for( j=1; j<(NROWS/sqrt_comm_sz)-1; j++ ){
+					for( j=1; j<(rowsNumber/sqrt_comm_sz)-1; j++ ){
 						for(int c=0; c<=2; c++ ){ /* For 3 colors j,j+1,j+2 */
 							myFinalArray[j][c] = leftCol[3*j-3+c]*((double)1/16) 	/* leftUpCorn */
 											   + leftCol[3*j+c]*((double)2/16)		/* left */
@@ -441,8 +502,8 @@ int main(int argc, char *argv[]) {
 
 				MPI_Test(&myNeighbors.right.recieveRequest,&flag,&status);
 				if( flag ){
-					int s = 3 * (NCOLS/sqrt_comm_sz) - 3;
-					for( j=1; j<(NROWS/sqrt_comm_sz)-1; j++ ){
+					int s = 3 * (colsNumber/sqrt_comm_sz) - 3;
+					for( j=1; j<(rowsNumber/sqrt_comm_sz)-1; j++ ){
 						for(int c=0; c<=2; c++ ){ /* For 3 colors j,j+1,j+2 */
 							myFinalArray[j][s+c] = myArray[j-1][s-3+c]*((double)1/16) 	/* leftUpCorn */
 												 + myArray[j][s-3+c]*((double)2/16)		/* left */
@@ -492,7 +553,7 @@ int main(int argc, char *argv[]) {
 					MPI_Test(&myNeighbors.rightUp.recieveRequest,&flag,&status);
 					if( flag ){
 						//i=0
-						int r = 3*(NCOLS/sqrt_comm_sz) - 3 ;
+						int r = 3*(colsNumber/sqrt_comm_sz) - 3 ;
 						for(int c=0; c<=2; c++ ){ /* For 3 colors j,j+1,j+2 */
 							myFinalArray[0][r+c] = topRow[r-3+c]*((double)1/16) 		/* leftUpCorn */
 												 + myArray[0][r-3+c]*((double)2/16)		/* left */
@@ -517,7 +578,7 @@ int main(int argc, char *argv[]) {
 					MPI_Test(&myNeighbors.leftDown.recieveRequest,&flag,&status);
 					if( flag ){
 						//j=0
-						int r = NROWS/sqrt_comm_sz - 1 ;
+						int r = rowsNumber/sqrt_comm_sz - 1 ;
 						for(int c=0; c<=2; c++ ){ /* For 3 colors j,j+1,j+2 */
 							myFinalArray[r][c] = leftCol[3*r-3+c]*((double)1/16) 	/* leftUpCorn */
 											   + leftCol[3*r+c]*((double)2/16)		/* left */
@@ -541,8 +602,8 @@ int main(int argc, char *argv[]) {
 
 					MPI_Test(&myNeighbors.rightDown.recieveRequest,&flag,&status);
 					if( flag ){
-						int r = NROWS/sqrt_comm_sz - 1 ;
-						int s = 3*(NCOLS/sqrt_comm_sz) - 3 ;
+						int r = rowsNumber/sqrt_comm_sz - 1 ;
+						int s = 3*(colsNumber/sqrt_comm_sz) - 3 ;
 						for(int c=0; c<=2; c++ ){ /* For 3 colors j,j+1,j+2 */
 							myFinalArray[r][s+c] = myArray[r-1][s-3+c]*((double)1/16) 	/* leftUpCorn */
 												 + myArray[r][s-3+c]*((double)2/16)		/* left */
@@ -581,14 +642,14 @@ int main(int argc, char *argv[]) {
 	endTime = MPI_Wtime();
 	printf("%d.\t%f seconds\n", my_rank, endTime-startTime);
 
-	MPI_Gatherv(*myArray,(NROWS/sqrt_comm_sz)*3*(NCOLS/sqrt_comm_sz),MPI_UNSIGNED_CHAR,*final2D,counts,displs,resizedtype,0,MPI_COMM_WORLD );
+	MPI_Gatherv(*myArray,(rowsNumber/sqrt_comm_sz)*3*(colsNumber/sqrt_comm_sz),MPI_UNSIGNED_CHAR,*final2D,counts,displs,resizedtype,0,MPI_COMM_WORLD );
 
 	if( my_rank == 0 ){
 
-		FILE *outputFile = fopen("mpiOutputColor.raw", "w");
+		FILE *outputFile = fopen(outputFileName, "w");
 
-		for( i=0; i<NROWS; i++ ){
-			for( j=0; j<3*NCOLS; j++ ){
+		for( i=0; i<rowsNumber; i++ ){
+			for( j=0; j<3*colsNumber; j++ ){
 				//printf("%c", final2D[i][j]);
 				fputc(final2D[i][j], outputFile);
 			}
