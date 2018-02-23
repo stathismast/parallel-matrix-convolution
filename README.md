@@ -68,14 +68,14 @@ P: 16/02/2018
 
 Οπότε έτσι λύθηκαν τα παραπάνω προβλήματα.Δηλαδή ο original ( κάθε διεργασίας ) θα παραμένει original μέχρι το τέλος, και στο τέλος του for θα γίνεται swap με τον τελικό filtered. ( Αυτό μάλλον εννοούσε και ο Κοτρώνης στην διάλεξη στο δήλο που είπε να κάνουμε malloc , ώστε στο τέλος να αλλάζουμε απλά δείκτες ).
 
->Εφαρμόζουμε φίλτρο ξεχωριστά στο εσωτερικό των γραμμών/στηλών και ξεχωριστά στις γωνίες, γιατί μπορεί να έχουμε πάρει κάποια γραμμή/στήλη αλλά όχι γωνία ( όταν κάνουμε Irecieve ) 
+>Εφαρμόζουμε φίλτρο ξεχωριστά στο εσωτερικό των γραμμών/στηλών και ξεχωριστά στις γωνίες, γιατί μπορεί να έχουμε πάρει κάποια γραμμή/στήλη αλλά όχι γωνία ( όταν κάνουμε Irecieve )
 
 >Έκανα για το εσωτερικό της topRow ( και για την περιπτωση που εχει topRow,αρα recieved == 1 ( δηλαδη δεν ειναι topRow του πινακα ) και για την περιπτωση που δεν εχει topRow αρα recieved == 2 )και δουλευει μια χαρά.
 
 >Μένουν να συμπληρωθούν τα υπόλοιπα if για τις άλλες περιπτώσεις με παρόμοια λογική.
 
 ΠΡΟΣΟΧΗ ΜΗΝ ΧΡΗΣΙΜΟΠΟΙΗΣΕΙΣ ΤΗΝ ΜΕΤΑΒΛΗΤΗ i ΤΟΥ ΕΞΩΤΕΡΙΚΟΥ for!!!
- 
+
 ΟΔΗΓΙΕΣ ΤΡΕΞΙΜΑΤΟΣ: mpicc -o finalOnTheWay finalOnTheWay.c -lm ; mpiexec -n 4 finalOnTheWay
                     mpicc -o finalOnTheWay finalOnTheWay.c -lm ; mpiexec -n 16 finalOnTheWay
 ------------------------------------------------------------------------------------------------------------
@@ -85,7 +85,7 @@ P: 18/02/2018
 >Σχεδόν το τελικό πρόγραμμα για εφαρμογή φίλτρου στην grey εικόνα με χρήση MPI.
 >Μένουν:1)Περίπτωση για 1 process
 	2)Reduce και έλεγχος αν είναι το ίδιο το τελευταίο με το προτελευταίο
- 
+
 ΟΔΗΓΙΕΣ ΤΡΕΞΙΜΑΤΟΣ: mpicc -o finalGrey finalGrey.c -lm ; mpiexec -n 4 finalGrey
                     mpicc -o finalGrey finalGrey.c -lm ; mpiexec -n 16 finalGrey
 ------------------------------------------------------------------------------------------------------------
@@ -93,7 +93,7 @@ P: 18/02/2018
 S: 18/02/2018
 # finalColor1.c
 >Uses 3 Scatter calls for each color channel individually. Doesn't use irecv yet. Will be updated in the near future.
- 
+
 ΟΔΗΓΙΕΣ ΤΡΕΞΙΜΑΤΟΣ: mpicc -o finalColor1 finalColor1.c -lm ; mpiexec -n 4 finalColor1
                     mpicc -o finalColor1 finalColor1.c -lm ; mpiexec -n 16 finalColor1
 ------------------------------------------------------------------------------------------------------------
@@ -109,14 +109,14 @@ TO DO GENERAL:1)Free arrays we malloced and free_types
 	      4)Measure times etc
 	      5)OpenMP + MPI
 	      6)Readme
- 
+
 ΟΔΗΓΙΕΣ ΤΡΕΞΙΜΑΤΟΣ: mpicc -o finalColor_1_Scatter finalColor_1_Scatter.c -lm ; mpiexec -n 4 finalColor_1_Scatter
                     mpicc -o finalColor_1_Scatter finalColor_1_Scatter.c -lm ; mpiexec -n 16 finalColor_1_Scatter
 ------------------------------------------------------------------------------------------------------------
 S: 19/02/2018
 # finalColor1.c
 >It now utilizes irecv.
- 
+
 ΟΔΗΓΙΕΣ ΤΡΕΞΙΜΑΤΟΣ: mpicc -o finalColor1 finalColor1.c -lm ; mpiexec -n 4 finalColor1
                     mpicc -o finalColor1 finalColor1.c -lm ; mpiexec -n 16 finalColor1
 ------------------------------------------------------------------------------------------------------------
@@ -134,7 +134,7 @@ TO DO GENERAL:1)Free arrays we malloced and free_types
 	      7)Barrier
 	      8)Parallel I/O
 	      9)Cartesian topology
- 
+
 ΟΔΗΓΙΕΣ ΤΡΕΞΙΜΑΤΟΣ: mpicc -o finalGrey_Null finalGrey_Null.c -lm ; mpiexec -n 4 finalGrey_Null
                     mpicc -o finalGrey_Null finalGrey_Null.c -lm ; mpiexec -n 16 finalGrey_Null
 
@@ -157,14 +157,14 @@ TO DO GENERAL:1)Free arrays we malloced and free_types
 	      7)Barrier
 	      8)Parallel I/O
 	      9)Cartesian topology
- 
+
 ΟΔΗΓΙΕΣ ΤΡΕΞΙΜΑΤΟΣ: mpicc -o finalGrey_Null_Reduce finalGrey_Null_Reduce.c -lm ; mpiexec -n 4 finalGrey_Null_Reduce
                     mpicc -o finalGrey_Null_Reduce finalGrey_Null_Reduce.c -lm ; mpiexec -n 16 finalGrey_Null_Reduce
 
 		    mpicc -o finalColor_Null_Reduce finalColor_Null_Reduce.c -lm ; mpiexec -n 4 finalColor_Null_Reduce
                     mpicc -o finalColor_Null_Reduce finalColor_Null_Reduce.c -lm ; mpiexec -n 16 finalColor_Null_Reduce
 -----------------------------------------------------------------------------------------------------------
-4 Final Versions 
+4 Final Versions
 
 finalColor_Null.c
 finalColor_Null_Reduce.c
@@ -195,3 +195,8 @@ mpicc -o finalGrey_Null finalGrey_Null.c -lm ; mpiexec -n <N> finalGrey_Null [-i
 mpicc -o finalGrey_Null_Reduce finalGrey_Null_Reduce.c -lm ; mpiexec -n <N> finalGrey_Null_Reduce [-i inputFileName] [-o outputFileName] [-s rowsNumber colsNumber] [-f filterApplications]
 
 -------------------------------------------------------------------------------------------------------------------
+
+S: 23/02/2018
+# testing folder
+>Folder containing 4 subfolders for testing purposes. One folder for the original version of color.c and gray.c (no cartesian, no sendInit, no reduce), one for cartesian, one for reduce and one for sendInit. Folder 'timings' is an archive of previous comparative timings.
+------------------------------------------------------------------------------------------------------------

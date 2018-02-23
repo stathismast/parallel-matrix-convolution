@@ -1,0 +1,296 @@
+linux10:/home/users/sdi1500092/parallel/testing/cartesian>make rungray procs=16 input=../waterfall_grey_1920_2520.raw
+Running on 16 processes for 1920x2520 pixels.
+Filter is applied 100 times.
+Input file is ../waterfall_grey_1920_2520.raw.
+mpiP: 
+mpiP: mpiP: mpiP V3.4.1 (Build Jan  9 2018/14:05:27)
+mpiP: Direct questions and errors to mpip-help@lists.sourceforge.net
+mpiP: 
+12.	9.148910 seconds
+0.	9.152026 seconds
+8.	9.168940 seconds
+15.	9.121427 seconds
+1.	9.144031 seconds
+14.	9.157401 seconds
+9.	9.169437 seconds
+13.	9.164802 seconds
+2.	9.161492 seconds
+10.	9.171407 seconds
+3.	9.154125 seconds
+11.	9.134198 seconds
+5.	9.157881 seconds
+4.	9.208533 seconds
+6.	9.154569 seconds
+7.	9.143454 seconds
+mpiP: 
+mpiP: Storing mpiP output in [./gray.16.10700.1.mpiP].
+mpiP: 
+linux10:/home/users/sdi1500092/parallel/testing/cartesian>make rungray input=../waterfall_grey_1920_2520.raw procs=25
+Running on 25 processes for 1920x2520 pixels.
+Filter is applied 100 times.
+Input file is ../waterfall_grey_1920_2520.raw.
+mpiP: 
+mpiP: mpiP: mpiP V3.4.1 (Build Jan  9 2018/14:05:27)
+mpiP: Direct questions and errors to mpip-help@lists.sourceforge.net
+mpiP: 
+0.	6.840024 seconds
+4.	6.788799 seconds
+1.	6.848009 seconds
+2.	6.844021 seconds
+3.	6.844030 seconds
+21.	6.899071 seconds
+16.	6.819016 seconds
+15.	6.864055 seconds
+20.	6.916697 seconds
+22.	6.912029 seconds
+11.	6.772051 seconds
+10.	6.820016 seconds
+23.	6.927145 seconds
+14.	6.892170 seconds
+24.	6.857449 seconds
+19.	6.783039 seconds
+8.	6.858959 seconds
+5.	6.828030 seconds
+12.	6.912059 seconds
+6.	6.812083 seconds
+18.	6.820043 seconds
+7.	6.786997 seconds
+9.	6.824024 seconds
+17.	6.848069 seconds
+13.	6.936036 seconds
+mpiP: 
+mpiP: Storing mpiP output in [./gray.25.10822.1.mpiP].
+mpiP: 
+linux10:/home/users/sdi1500092/parallel/testing/cartesian>make rungray input=../waterfall_grey_1920_2520.raw procs=36
+Running on 36 processes for 1920x2520 pixels.
+Filter is applied 100 times.
+Input file is ../waterfall_grey_1920_2520.raw.
+mpiP: 
+mpiP: mpiP: mpiP V3.4.1 (Build Jan  9 2018/14:05:27)
+mpiP: Direct questions and errors to mpip-help@lists.sourceforge.net
+mpiP: 
+33.	6.563980 seconds
+34.	6.552025 seconds
+35.	6.548030 seconds
+0.	6.512057 seconds
+1.	6.512127 seconds
+28.	6.657193 seconds
+27.	6.572021 seconds
+31.	6.656914 seconds
+32.	6.663038 seconds
+30.	6.658310 seconds
+29.	6.667433 seconds
+2.	6.588023 seconds
+7.	6.572013 seconds
+3.	6.592029 seconds
+26.	6.654301 seconds
+24.	6.658343 seconds
+20.	6.647152 seconds
+19.	6.646153 seconds
+25.	6.668001 seconds
+8.	6.712011 seconds
+12.	6.724011 seconds
+4.	6.635963 seconds
+22.	6.675065 seconds
+21.	6.664011 seconds
+16.	6.747328 seconds
+10.	6.728031 seconds
+5.	6.627449 seconds
+6.	6.636026 seconds
+15.	6.696038 seconds
+18.	6.704094 seconds
+23.	6.683987 seconds
+11.	6.724014 seconds
+14.	6.728016 seconds
+9.	6.700006 seconds
+13.	6.731450 seconds
+17.	6.744004 seconds
+mpiP: 
+mpiP: Storing mpiP output in [./gray.36.10976.1.mpiP].
+mpiP: 
+linux10:/home/users/sdi1500092/parallel/testing/cartesian>make rungray input=../waterfall_grey_1920_2520.raw procs=64
+Running on 64 processes for 1920x2520 pixels.
+Filter is applied 100 times.
+Input file is ../waterfall_grey_1920_2520.raw.
+mpiP: 
+mpiP: mpiP: mpiP V3.4.1 (Build Jan  9 2018/14:05:27)
+mpiP: Direct questions and errors to mpip-help@lists.sourceforge.net
+mpiP: 
+58.	5.926315 seconds
+59.	5.914397 seconds
+60.	5.959755 seconds
+63.	5.967742 seconds
+62.	5.968018 seconds
+56.	5.944022 seconds
+57.	5.944020 seconds
+61.	5.964023 seconds
+48.	5.980153 seconds
+40.	5.970299 seconds
+52.	6.026121 seconds
+51.	6.012346 seconds
+53.	6.044010 seconds
+54.	6.040017 seconds
+50.	6.016066 seconds
+55.	6.032019 seconds
+49.	6.028015 seconds
+32.	6.050551 seconds
+45.	6.056021 seconds
+41.	6.024012 seconds
+47.	6.056003 seconds
+25.	6.012081 seconds
+33.	6.055125 seconds
+34.	6.047125 seconds
+16.	6.063105 seconds
+24.	6.055997 seconds
+46.	6.064018 seconds
+44.	6.076019 seconds
+35.	6.052022 seconds
+42.	6.040035 seconds
+36.	6.105157 seconds
+43.	6.032022 seconds
+0.	6.080840 seconds
+38.	6.119453 seconds
+37.	6.116013 seconds
+28.	6.116828 seconds
+39.	6.124009 seconds
+31.	6.092042 seconds
+29.	6.120052 seconds
+1.	6.104776 seconds
+27.	6.099994 seconds
+17.	6.108015 seconds
+26.	6.104007 seconds
+8.	6.118949 seconds
+30.	6.108028 seconds
+23.	6.151980 seconds
+2.	6.120769 seconds
+9.	6.112025 seconds
+18.	6.111622 seconds
+22.	6.160018 seconds
+21.	6.179031 seconds
+10.	6.152028 seconds
+20.	6.184029 seconds
+19.	6.140562 seconds
+6.	6.161182 seconds
+14.	6.192047 seconds
+3.	6.168046 seconds
+4.	6.209195 seconds
+13.	6.192024 seconds
+5.	6.192070 seconds
+15.	6.212020 seconds
+7.	6.204026 seconds
+12.	6.232032 seconds
+11.	6.224023 seconds
+mpiP: 
+mpiP: Storing mpiP output in [./gray.64.11129.1.mpiP].
+mpiP: 
+linux10:/home/users/sdi1500092/parallel/testing/cartesian>make rungray input=../waterfall_grey_1920_2520.raw procs=100
+Running on 100 processes for 1920x2520 pixels.
+Filter is applied 100 times.
+Input file is ../waterfall_grey_1920_2520.raw.
+mpiP: 
+mpiP: mpiP: mpiP V3.4.1 (Build Jan  9 2018/14:05:27)
+mpiP: Direct questions and errors to mpip-help@lists.sourceforge.net
+mpiP: 
+90.	5.192093 seconds
+91.	5.175334 seconds
+92.	5.303438 seconds
+99.	5.255002 seconds
+98.	5.259893 seconds
+94.	5.311430 seconds
+95.	5.304024 seconds
+93.	5.315352 seconds
+96.	5.267898 seconds
+80.	5.280906 seconds
+97.	5.256023 seconds
+81.	5.284029 seconds
+82.	5.308799 seconds
+85.	5.344142 seconds
+84.	5.347902 seconds
+86.	5.351860 seconds
+69.	5.369147 seconds
+79.	5.364030 seconds
+87.	5.352033 seconds
+71.	5.365906 seconds
+83.	5.328800 seconds
+75.	5.315534 seconds
+70.	5.368034 seconds
+76.	5.383934 seconds
+59.	5.326062 seconds
+78.	5.384054 seconds
+89.	5.312184 seconds
+72.	5.341428 seconds
+74.	5.335828 seconds
+73.	5.344036 seconds
+88.	5.327049 seconds
+77.	5.388016 seconds
+68.	5.407511 seconds
+64.	5.350805 seconds
+65.	5.351991 seconds
+66.	5.352015 seconds
+58.	5.355794 seconds
+61.	5.410659 seconds
+63.	5.404026 seconds
+67.	5.364017 seconds
+60.	5.421928 seconds
+62.	5.424019 seconds
+56.	5.379007 seconds
+54.	5.406263 seconds
+55.	5.406278 seconds
+57.	5.376018 seconds
+50.	5.368026 seconds
+51.	5.364028 seconds
+53.	5.419969 seconds
+52.	5.440004 seconds
+45.	5.463499 seconds
+43.	5.416026 seconds
+44.	5.477974 seconds
+49.	5.407375 seconds
+46.	5.481981 seconds
+41.	5.432040 seconds
+39.	5.472046 seconds
+48.	5.428009 seconds
+40.	5.444683 seconds
+38.	5.496062 seconds
+47.	5.460016 seconds
+31.	5.440034 seconds
+30.	5.455908 seconds
+42.	5.448029 seconds
+32.	5.462836 seconds
+29.	5.457075 seconds
+20.	5.464874 seconds
+33.	5.460023 seconds
+0.	5.520203 seconds
+36.	5.528835 seconds
+21.	5.473589 seconds
+35.	5.472030 seconds
+1.	5.524032 seconds
+27.	5.464011 seconds
+34.	5.480497 seconds
+28.	5.487917 seconds
+10.	5.492065 seconds
+37.	5.536025 seconds
+2.	5.532043 seconds
+9.	5.493500 seconds
+22.	5.498456 seconds
+17.	5.512343 seconds
+18.	5.512511 seconds
+7.	5.457509 seconds
+19.	5.512034 seconds
+8.	5.528767 seconds
+25.	5.498264 seconds
+24.	5.506800 seconds
+15.	5.385536 seconds
+23.	5.512017 seconds
+16.	5.533902 seconds
+11.	5.508041 seconds
+3.	5.572018 seconds
+26.	5.520010 seconds
+12.	5.468013 seconds
+6.	5.524052 seconds
+13.	5.452018 seconds
+5.	5.547902 seconds
+14.	5.462361 seconds
+4.	5.595873 seconds
+mpiP: 
+mpiP: Storing mpiP output in [./gray.100.11309.1.mpiP].
+mpiP: 
