@@ -200,3 +200,13 @@ S: 23/02/2018
 # testing folder
 >Folder containing 4 subfolders for testing purposes. One folder for the original version of color.c and gray.c (no cartesian, no sendInit, no reduce), one for cartesian, one for reduce and one for sendInit. Folder 'timings' is an archive of previous comparative timings.
 ------------------------------------------------------------------------------------------------------------
+
+P: 23/02/2018
+# PARADOSI folder
+>TO DO:
+1)Correcting makefiles
+2)OpenMP
+3)Timings
+4)Cartesian README + memory leak
+5)Inline/Define get2Darray/getRGBarray
+------------------------------------------------------------------------------------------------------------
