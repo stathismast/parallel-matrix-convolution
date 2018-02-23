@@ -709,16 +709,16 @@ int main(int argc, char *argv[]) {
 			}
 			x++;
 		}
-		MPI_Reduce(&localChanges,&globalChanges,1,MPI_CHAR,MPI_LOR,0,MPI_COMM_WORLD);
-		if( my_rank == 0 ){
-			if( !globalChanges ){
-				/* There are no changes */
-				printf("THERE ARE NO CHANGES WOW for i %d \n",i );
-			}
-			else{
-				/* There are changes somewhere */
-			}
+		MPI_Allreduce(&localChanges,&globalChanges,1,MPI_CHAR,MPI_LOR,MPI_COMM_WORLD);
+
+		if( !globalChanges ){
+			/* There are no changes */
+			printf("THERE ARE NO CHANGES WOW for i %d \n",i );
 		}
+		else{
+			/* There are changes somewhere */
+		}
+
 		MPI_Barrier(MPI_COMM_WORLD);
 
 	}
@@ -757,7 +757,7 @@ int main(int argc, char *argv[]) {
 	MPI_Request_free(&myNeighbors.rightUp.recieveRequest);
 	MPI_Request_free(&myNeighbors.right.recieveRequest);
 	MPI_Request_free(&myNeighbors.rightDown.recieveRequest);
-	
+
 	free(topRow);
 	free(bottomRow);
 	free(leftCol);
