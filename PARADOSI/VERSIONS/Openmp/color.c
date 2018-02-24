@@ -312,7 +312,6 @@ int main(int argc, char *argv[]) {
 	MPI_Barrier(MPI_COMM_WORLD);
 	startTime = MPI_Wtime();
 
-#pragma omp parallel for
 	for(i=0; i<filterApplications; i++){
 
 		/* Initialize recieved flags for MPI_Test */
@@ -380,6 +379,7 @@ int main(int argc, char *argv[]) {
 
 
 		/* Apply filter on the inner pixels */
+		#pragma omp parallel for
 		for(int i=1; i<(rowsNumber/sqrt_comm_sz)-1; i++){
 			for(int j=3; j<3*((colsNumber/sqrt_comm_sz)-1); j = j+3 ){
 				for(int c=0; c<=2; c++ ){ /* For 3 colors j,j+1,j+2 */

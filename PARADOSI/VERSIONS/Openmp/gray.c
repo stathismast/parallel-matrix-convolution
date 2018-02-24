@@ -291,7 +291,6 @@ int main(int argc, char *argv[]) {
 	MPI_Barrier(MPI_COMM_WORLD);
 	startTime = MPI_Wtime();
 
-#pragma omp parallel for
 	for(i=0; i<filterApplications; i++){
 
 		/* Initialize recieved flags for MPI_Test */
@@ -359,6 +358,7 @@ int main(int argc, char *argv[]) {
 
 
 		/* Apply filter on the inner pixels */
+		#pragma omp parallel for
 		for(int i=1; i<(rowsNumber/sqrt_comm_sz)-1; i++){
 			for(int j=1; j<(colsNumber/sqrt_comm_sz)-1; j++){
 				myFinalArray[i][j] = myArray[i-1][j-1]*((double)1/16)	/* leftUpCorn */
