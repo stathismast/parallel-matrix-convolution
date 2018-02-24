@@ -1,5 +1,6 @@
 #HOW TO USE
-#make: compiles all available code
+#make: compiles color and gray programs
+#make mpip: compiles color and gray programs with mpip
 #make rungray: runs gray for the default parameters
 #make runcolor: runs color for the default parameters
 
@@ -28,8 +29,10 @@ cols = 1920
 rows = 2520
 
 all:
-	mpicc -o gray gray.c -L/usr/local/mpip3/lib -lmpiP -lm -lbfd  ; mpicc -o color color.c -L/usr/local/mpip3/lib -lmpiP -lm -lbfd ;
+	mpicc -o gray gray.c -lm ; mpicc -o color color.c -lm ;
 
+mpip:
+	mpicc -o gray gray.c -L/usr/local/mpip3/lib -lmpiP -lm -lbfd  ; mpicc -o color color.c -L/usr/local/mpip3/lib -lmpiP -lm -lbfd ;
 
 rungray:
 ifeq ($(input),default)
