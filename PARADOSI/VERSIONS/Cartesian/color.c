@@ -620,7 +620,7 @@ int main(int argc, char *argv[]) {
 		MPI_Wait(&myNeighbors.rightUp.sendRequest,&status);
 		MPI_Wait(&myNeighbors.right.sendRequest,&status);
 		MPI_Wait(&myNeighbors.rightDown.sendRequest,&status);
-		
+
 		/* Swap arrays */
 		temp = myArray;
 		myArray = myFinalArray;
@@ -672,6 +672,8 @@ int main(int argc, char *argv[]) {
 	MPI_Type_free(&row);
 	MPI_Type_free(&column);
 
+	MPI_Comm_free(&new_comm);
+	
 	/* Shut down MPI */
 	MPI_Finalize();
 	return 0;
