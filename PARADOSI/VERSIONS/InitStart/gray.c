@@ -626,18 +626,18 @@ int main(int argc, char *argv[]) {
 
 			}
 
-			/* Wait my Isend */
-			MPI_Wait(&myNeighbors.top.sendRequest,&status);
-			MPI_Wait(&myNeighbors.leftUp.sendRequest,&status);
-			MPI_Wait(&myNeighbors.left.sendRequest,&status);
-			MPI_Wait(&myNeighbors.bottom.sendRequest,&status);
-			MPI_Wait(&myNeighbors.leftDown.sendRequest,&status);
-			MPI_Wait(&myNeighbors.rightUp.sendRequest,&status);
-			MPI_Wait(&myNeighbors.right.sendRequest,&status);
-			MPI_Wait(&myNeighbors.rightDown.sendRequest,&status);
-
 		}
 
+		/* Wait my Isend */
+		MPI_Wait(&myNeighbors.top.sendRequest,&status);
+		MPI_Wait(&myNeighbors.leftUp.sendRequest,&status);
+		MPI_Wait(&myNeighbors.left.sendRequest,&status);
+		MPI_Wait(&myNeighbors.bottom.sendRequest,&status);
+		MPI_Wait(&myNeighbors.leftDown.sendRequest,&status);
+		MPI_Wait(&myNeighbors.rightUp.sendRequest,&status);
+		MPI_Wait(&myNeighbors.right.sendRequest,&status);
+		MPI_Wait(&myNeighbors.rightDown.sendRequest,&status);
+		
 		/* Swap arrays */
 		temp = myArray;
 		myArray = myFinalArray;
