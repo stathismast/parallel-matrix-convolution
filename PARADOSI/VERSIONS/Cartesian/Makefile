@@ -1,9 +1,7 @@
 #HOW TO USE
 #make: compiles all available code
-#make gray: runs gray for the default parameters
-#make color: runs color for the default parameters
-#make reducegray: runs reducegray for the default parameters
-#make reducecolor: runs reducecolor for the default parameters
+#make rungray: runs gray for the default parameters
+#make runcolor: runs color for the default parameters
 
 #You can append something like 'procs=16' to the above commands to change
 #each parameter.
