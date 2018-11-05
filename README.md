@@ -9,7 +9,7 @@ calculations,  and Cartesian Topology.
 
 ## Compile
 
-- being in the version folder you want, run
+- Being in the version folder you want, run:
 ```
     mpicc gray.c -o gray -lm
 
@@ -20,7 +20,7 @@ calculations,  and Cartesian Topology.
 
 ## Execute
 
-- for gray image
+- For gray image:
 ```
     mpiexec -n <number_of_processes> gray [-i inputFileName] [-o outputFileName]
     [-s rowsNumber colsNumber] [-f filterApplications]
@@ -31,7 +31,7 @@ calculations,  and Cartesian Topology.
     [-o outputFileName] [-s rowsNumber colsNumber] [-f filterApplications]
 ```
 
-- for color image
+- For color image:
 ```
     mpiexec -n <number_of_processes> color [-i inputFileName] [-o outputFileName]
     [-s rowsNumber colsNumber] [-f filterApplications]
@@ -44,4 +44,4 @@ calculations,  and Cartesian Topology.
 
 ## Examples
 
-- You can find find examples of input files into waterfall/ folder
+- You can find examples of input files into waterfall/ folder.
