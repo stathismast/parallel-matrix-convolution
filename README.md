@@ -19,22 +19,12 @@
 ```
     mpiexec -n <number_of_processes> gray [-i inputFileName] [-o outputFileName]
     [-s rowsNumber colsNumber] [-f filterApplications]
-
-    or
-
-    mpiexec -f ../machines -n <number_of_processes> gray [-i inputFileName]
-    [-o outputFileName] [-s rowsNumber colsNumber] [-f filterApplications]
 ```
 
 - To apply the filter on a colored .raw image
 ```
     mpiexec -n <number_of_processes> color [-i inputFileName] [-o outputFileName]
     [-s rowsNumber colsNumber] [-f filterApplications]
-
-    or
-
-    mpiexec -f ../machines -n <number_of_processes> color [-i inputFileName]
-    [-o outputFileName] [-s rowsNumber colsNumber] [-f filterApplications]
 ```
 
 ## Examples
