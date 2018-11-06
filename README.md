@@ -1,15 +1,10 @@
-# Application of filter to a large image using Convolution Matrix in Parallel Programming
+# Parallel Matrix Convolution in C using MPI and openMP
 
 - Course Project of Parallel  Systems Course.
 
-- Implemented in C using MPI.
-
-- Used techniques like Foster's Methodology, overlapping communications with
-calculations,  and Cartesian Topology.
-
 ## Compile
 
-- Being in the version folder you want, run:
+- From the version desired version directory, execute:
 ```
     mpicc gray.c -o gray -lm
 
@@ -20,7 +15,7 @@ calculations,  and Cartesian Topology.
 
 ## Execute
 
-- For gray image:
+- To apply the filter on a gray .raw image
 ```
     mpiexec -n <number_of_processes> gray [-i inputFileName] [-o outputFileName]
     [-s rowsNumber colsNumber] [-f filterApplications]
@@ -31,7 +26,7 @@ calculations,  and Cartesian Topology.
     [-o outputFileName] [-s rowsNumber colsNumber] [-f filterApplications]
 ```
 
-- For color image:
+- To apply the filter on a colored .raw image
 ```
     mpiexec -n <number_of_processes> color [-i inputFileName] [-o outputFileName]
     [-s rowsNumber colsNumber] [-f filterApplications]
@@ -44,4 +39,4 @@ calculations,  and Cartesian Topology.
 
 ## Examples
 
-- You can find examples of input files into waterfall/ folder.
+- Some examples of input files can be found in the ./waterfall/ directory
